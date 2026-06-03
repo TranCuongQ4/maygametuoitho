@@ -4,353 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Kho Game Tuổi Thơ - NES & SNES Mobile</title>
-	<link rel="icon" href="data:,">
+    <link rel="icon" href="data:,">
     <style>
-        /* Tối ưu hóa toàn màn hình, chặn cuộn và tràn màn hình */
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #121212;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #fff;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        /* Giao diện Menu chính */
-        #menu-container {
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
-            padding: 20px 20px 40px 20px; /* Thêm padding bottom để không đè vào footer */
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        h1 {
-            color: #ffcc00;
-            font-size: 26px;
-            margin-bottom: 5px;
-            text-shadow: 2px 2px #000;
-        }
-
-        p {
-            color: #aaa;
-            font-size: 14px;
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            margin-top: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #00ffcc;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* Thiết kế nút bấm chọn game trực quan */
-        .btn {
-            background: linear-gradient(145deg, #2a2a2a, #222);
-            color: white;
-            border: 1px solid #444;
-            padding: 14px 20px;
-            margin: 6px 0;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            width: 90%;
-            max-width: 340px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            transition: all 0.1s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-            background: #ffcc00;
-            color: #000;
-            border-color: #fff;
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        /* ĐỊNH DẠNG NÚT HƯỚNG DẪN SỬ DỤNG */
-        .btn-hd {
-            background: linear-gradient(145deg, #0f2b46, #0a1c2e);
-            border: 1px solid #00ffcc;
-            color: #00ffcc;
-        }
-
-        /* FOOTER THÔNG TIN TÁC GIẢ CHỮ VÀNG NHỎ */
-        .footer-credits {
-            color: #ffcc00;
-            font-size: 12px;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            text-align: center;
-            letter-spacing: 0.5px;
-            opacity: 0.9;
-        }
-
-        /* Khung chứa giả lập chiếm trọn vẹn 100% không gian */
-        #game-box {
-            width: 100%;
-            height: 100%;
-            display: none; 
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 9999;
-            background-color: #000;
-        }
-
-        #emulator {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* NÚT THOÁT GAME DI ĐỘNG (FLOATING DRAG BUTTON) */
-        #custom-close-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 100000;
-            background-color: rgba(255, 51, 102, 0.75);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            touch-action: none;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
-        #custom-close-btn:active {
-            background-color: #ff0033;
-            border-color: #fff;
-        }
-
-        /* Gợi ý xoay màn hình nếu người dùng đang để màn hình dọc */
-        @media screen and (orientation: portrait) {
-            .rotate-hint {
-                display: block;
-                color: #ff3366;
-                font-size: 13px;
-                margin-top: 5px;
-                font-weight: bold;
-            }
-        }
-        @media screen and (orientation: landscape) {
-            .rotate-hint {
-                display: none;
-            }
-        }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #121212; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #fff; overflow: hidden; touch-action: none; }
+        #menu-container { width: 100%; height: 100%; box-sizing: border-box; padding: 20px 20px 40px 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; position: relative; }
+        h1 { color: #ffcc00; font-size: 26px; margin-bottom: 5px; text-shadow: 2px 2px #000; }
+        p { color: #aaa; font-size: 14px; margin-top: 0; margin-bottom: 20px; }
+        .section-title { margin-top: 15px; font-size: 16px; font-weight: bold; color: #00ffcc; letter-spacing: 1px; text-transform: uppercase; }
+        .btn { background: linear-gradient(145deg, #2a2a2a, #222); color: white; border: 1px solid #444; padding: 14px 20px; margin: 6px 0; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; width: 90%; max-width: 340px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: all 0.1s ease; -webkit-tap-highlight-color: transparent; }
+        .btn:active { transform: scale(0.98); background: #ffcc00; color: #000; border-color: #fff; }
+        #file-input { display: none; }
+        .btn-hd { background: linear-gradient(145deg, #0f2b46, #0a1c2e); border: 1px solid #00ffcc; color: #00ffcc; }
+        .footer-credits { color: #ffcc00; font-size: 12px; margin-top: 25px; margin-bottom: 10px; text-align: center; letter-spacing: 0.5px; opacity: 0.9; }
+        #game-box { width: 100%; height: 100%; display: none; position: absolute; top: 0; left: 0; z-index: 9999; background-color: #000; }
+        #emulator { width: 100%; height: 100%; }
+        #custom-close-btn { position: absolute; top: 15px; left: 15px; z-index: 100000; background-color: rgba(255, 51, 102, 0.75); color: white; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 50%; width: 44px; height: 44px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); touch-action: none; user-select: none; }
+        .rotate-hint { color: #ff3366; font-size: 13px; margin-top: 5px; font-weight: bold; display: none; }
+        @media screen and (orientation: portrait) { .rotate-hint { display: block; } }
     </style>
 </head>
 <body>
-
     <div id="menu-container">
         <h1>🎮 KHO GAME TUỔI THƠ </h1>
         <p>Hệ máy NES & SNES kỉ niệm tuổi thơ</p>
         <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
-        
         <div class="section-title">ーーー Game NES (4 Nút) ーーー</div>
-        <button class="btn" onclick="loadGame('nes', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp)</button>
-        <button class="btn" onclick="loadGame('nes', 'roms/1200-in-1.nes')">🎮 1200-in-1 (Bản tổng hợp)</button>
-
+        <button class="btn" onclick="loadGame('fceumm', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp)</button>
+        <button class="btn" onclick="loadGame('fceumm', 'roms/1200-in-1.nes')">🎮 1200-in-1 (Bản tổng hợp)</button>
         <div class="section-title">ーーー Game SNES (6 Nút) ーーー</div>
-        <button class="btn" onclick="loadGame('snes', 'roms/Aladdin (USA).sfc')">🧞 Aladdin (USA)</button>
-        <button class="btn" onclick="loadGame('snes', 'roms/Final Fight 3 (USA).sfc')">👊 Final Fight 3 (USA)</button>
-        <button class="btn" onclick="loadGame('snes', 'roms/International Superstar Soccer (USA).sfc')">⚽ Siêu Sao Bóng Đá</button>
-        <button class="btn" onclick="loadGame('snes', 'roms/Biker Mice from Mars (USA).sfc')">🏍️ Đua Xe Chuột MODO Harley</button>
-
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Aladdin (USA).sfc')">🧞 Aladdin (USA)</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Final Fight 3 (USA).sfc')">👊 Final Fight 3 (USA)</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/International Superstar Soccer (USA).sfc')">⚽ Siêu Sao Bóng Đá</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Biker Mice from Mars (USA).sfc')">🏍️ Đua Xe Chuột MODO Harley</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Side Pocket (USA).sfc')">🎱 Side Pocket (Bida Lỗ)</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Street Fighter II Turbo (V1.0) (E) [!].smc')">🥋 Street Fighter II Turbo</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Super Bomberman 4 (Japan).sfc')">💣 Super Bomberman 4</button>
+        <button class="btn" onclick="loadGame('snes9x', 'roms/Super Double Dragon (USA).sfc')">🐲 Super Double Dragon</button>
         <div class="section-title">ーーー Tùy chọn khác ーーー</div>
         <label for="file-input" class="btn" style="display: block; text-align: center; box-sizing: border-box;">📁 Tự nạp file ROM từ máy</label>
         <input type="file" id="file-input" accept=".nes,.sfc,.smc,.zip">
-        
         <button class="btn btn-hd" onclick="xemHuongDan()">📖 Hướng Dẫn Sử Dụng</button>
-
         <div class="footer-credits">Thiết Kế Trần Cường - Zalo: 0907860662</div>
     </div>
-
     <div id="game-box">
         <div id="custom-close-btn">✕</div>
         <div id="emulator"></div>
     </div>
-
     <script src="huongdan.js"></script>
-
     <script>
-        // Khởi tạo biến lưu trữ trình phát của EmulatorJS toàn cục
-        var myEJSPlayer = null;
-
-        // Gọi game có sẵn từ danh sách
-        function loadGame(system, romUrl) {
-            startEmulator(system, romUrl);
-        }
-
-        // Tự nhận diện file khi người dùng tải lên từ thiết bị
+        function loadGame(system, romUrl) { startEmulator(system, romUrl); }
         document.getElementById('file-input').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-
+            var file = e.target.files[0]; if (!file) return;
             var ext = file.name.split('.').pop().toLowerCase();
-            var system = '';
-
-            if (ext === 'nes') {
-                system = 'nes';
-            } else if (ext === 'sfc' || ext === 'smc') {
-                system = 'snes';
-            } else if (ext === 'zip') {
-                system = 'snes'; 
-            } else {
-                alert('Chỉ chấp nhận file định dạng .nes, .sfc, .smc!');
-                return;
-            }
-
-            var blobUrl = URL.createObjectURL(file);
-            startEmulator(system, blobUrl);
+            var system = (ext === 'nes') ? 'fceumm' : 'snes9x';
+            startEmulator(system, URL.createObjectURL(file));
         });
 
-        // Hàm kích hoạt EmulatorJS HOÀN TOÀN TRỰC TUYẾN từ CDN đám mây
         function startEmulator(coreType, url) {
             document.getElementById('menu-container').style.display = 'none';
             document.getElementById('game-box').style.display = 'block';
 
-            // Reset lại vị trí nút thoát về mặc định ban đầu khi mở game mới
-            var closeBtn = document.getElementById('custom-close-btn');
-            closeBtn.style.top = '15px';
-            closeBtn.style.left = '15px';
-            closeBtn.style.right = 'auto';
-
-            // Cấu hình các tham số chạy hoàn toàn bằng hệ thống Online của EmulatorJS
-            EJS_player = '#emulator';
-            EJS_core = coreType;
-            EJS_gameUrl = url;
+            window.EJS_player = '#emulator';
+            window.EJS_core = coreType;
+            window.EJS_gameUrl = url;
+            window.EJS_pathtodata = 'data/';
+            window.EJS_corePath = 'data/cores/';
+            window.EJS_language = 'en';
             
-            // Trỏ đường dẫn dữ liệu lõi hệ thống thẳng lên máy chủ trực tuyến CDN gốc
-            EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/'; 
-            
-            EJS_startOnLoaded = true;
-            EJS_Buttons = {
-                playPause: false, 
-                restart: true,
-                reloadCore: false,
-                stateSave: true,  
-                stateLoad: true,  
-                fullscreen: true,
-                volume: true
+            // THÊM 3 DÒNG NÀY ĐỂ ÉP GAME CHẠY TỰ ĐỘNG
+            window.EJS_startOnLoaded = true;
+            window.EJS_onGameStart = function() {
+                console.log("Game đã bắt đầu!");
             };
 
-            // Tiến hành nạp file Loader trực tuyến từ hệ thống chính chủ đám mây
             var script = document.createElement('script');
-            script.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-            
-            // Lắng nghe khi mã nguồn nạp xong để lưu lại phiên làm việc phục vụ việc tắt game sạch sẽ
-            script.onload = function() {
-                if (typeof EJS_Emulator !== 'undefined') {
-                    myEJSPlayer = EJS_Emulator;
-                }
-            };
+            script.src = "data/loader.js";
             document.head.appendChild(script);
         }
 
-        // Hàm xử lý đóng game giải phóng bộ nhớ triệt để
-        function forceCloseGame() {
-            // Thực hiện gọi hàm đóng lõi chính thức nếu EmulatorJS đang hoạt động
-            if (myEJSPlayer && myEJSPlayer.exit) {
-                try { myEJSPlayer.exit(); } catch(e) { console.log("Lỗi đóng lõi:", e); }
-            } else if (typeof ejs !== 'undefined' && ejs.exit) {
-                try { ejs.exit(); } catch(e) { console.log(e); }
-            }
-            
-            // Dọn sạch khung hiển thị và ẩn lớp giao diện trò chơi về menu chính
-            document.getElementById('emulator').innerHTML = '';
-            document.getElementById('game-box').style.display = 'none';
-            document.getElementById('menu-container').style.display = 'flex';
-            
-            // Đặt lại biến theo dõi về rỗng
-            myEJSPlayer = null;
-        }
-
-        // XỬ LÝ KÉO THẢ NÚT THOÁT TRÊN DI ĐỘNG VÀ MÁY TÍNH
-        (function() {
-            var button = document.getElementById('custom-close-btn');
-            var isDragging = false;
-            var hasMoved = false;
-            var startX, startY, initialLeft, initialTop;
-
-            function dragStart(e) {
-                isDragging = true;
-                hasMoved = false;
-                var clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                startX = clientX;
-                startY = clientY;
-                initialLeft = button.offsetLeft;
-                initialTop = button.offsetTop;
-            }
-
-            function dragMove(e) {
-                if (!isDragging) return;
-                var clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                var clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                var deltaX = clientX - startX;
-                var deltaY = clientY - startY;
-                
-                if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-                    hasMoved = true;
-                }
-                
-                var newLeft = initialLeft + deltaX;
-                var newTop = initialTop + deltaY;
-                var maxLeft = window.innerWidth - button.offsetWidth;
-                var maxTop = window.innerHeight - button.offsetHeight;
-                
-                if (newLeft < 0) newLeft = 0;
-                if (newLeft > maxLeft) newLeft = maxLeft;
-                if (newTop < 0) newTop = 0;
-                if (newTop > maxTop) newTop = maxTop;
-                
-                button.style.left = newLeft + 'px';
-                button.style.top = newTop + 'px';
-                button.style.right = 'auto';
-            }
-
-            function dragEnd(e) {
-                isDragging = false;
-                if (!hasMoved) {
-                    forceCloseGame();
-                }
-            }
-
-            button.addEventListener('mousedown', dragStart);
-            window.addEventListener('mousemove', dragMove);
-            window.addEventListener('mouseup', dragEnd);
-
-            button.addEventListener('touchstart', dragStart, { passive: true });
-            window.addEventListener('touchmove', dragMove, { passive: false });
-            window.addEventListener('touchend', dragEnd);
-        })();
+        function forceCloseGame() { window.location.reload(); }
+        document.getElementById('custom-close-btn').addEventListener('click', forceCloseGame);
     </script>
-
+	
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('Service Worker đã sẵn sàng!'))
+                    .catch((err) => console.log('Lỗi Service Worker:', err));
+            });
+        }
+    </script>
+	
+	
 </body>
 </html>
