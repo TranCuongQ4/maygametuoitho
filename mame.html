@@ -59,6 +59,7 @@ h1{
     box-shadow:0 4px 6px rgba(0,0,0,.3);
     transition:all .1s ease;
     -webkit-tap-highlight-color:transparent;
+    text-align:center;
 }
 
 .btn:active{
@@ -74,20 +75,17 @@ h1{
     color:#00ffcc;
 }
 
-
 .btn-gt{
     background:linear-gradient(145deg,#0f2b46,#0a1c2e);
     border:1px solid #00ffcc;
     color:#00ffcc;
 }
 
-
 .btn-hd { 
-            background: linear-gradient(145deg, #0f2b46, #0a1c2e); 
-            border: 1px solid #00ffcc; 
-            color: #00ffcc; 
-        }
-
+    background: linear-gradient(145deg, #0f2b46, #0a1c2e); 
+    border: 1px solid #00ffcc; 
+    color: #00ffcc; 
+}
 
 #romInput{
     display:none;
@@ -121,27 +119,20 @@ h1{
     top:20px;
     left:20px;
     z-index:100000;
-
     background-color:rgba(255,51,102,.9);
     color:white;
-
     border:2px solid rgba(255,255,255,.5);
     border-radius:50%;
-
     width:50px;
     height:50px;
-
     font-size:24px;
     font-weight:bold;
-
     display:flex;
     align-items:center;
     justify-content:center;
-
     cursor:pointer;
     user-select:none;
     touch-action:none;
-
     box-shadow:0 4px 15px rgba(0,0,0,.5);
 }
 
@@ -209,7 +200,15 @@ h1{
     width:100%;
 }
 
-
+.section-title {
+    color:#ffcc00;
+    font-size:18px;
+    margin:15px 0 10px 0;
+    text-align:center;
+    border-top:1px solid #444;
+    padding-top:15px;
+    width:90%;
+}
 
 </style>
 </head>
@@ -308,7 +307,7 @@ h1{
 </button>
 
 <button class="btn"
-    onclick="startGame('roms/megaman.zip')">
+    onclick="startGame('megaman.zip')">
     ⚜ Mega Man ⚜
 </button>
 
@@ -328,31 +327,27 @@ h1{
 </button>
 
 <div class="section-title">☛ Game Thùng Siêu Thị ☚</div>
-	<button class="btn">
 
-<button class="btn btn-gt" onclick="window.location.href='https://trancuongq4.github.io/neogeosieuthi/'">🕹️ Neo Geo Pro</button>
+<button class="btn btn-gt" onclick="window.location.href='https://trancuongq4.github.io/neogeosieuthi/'">🕹️ Neo Geo Pro 🕹️</button>
+	
+<div class="section-title">⚙️ Tiện ích ⚙️</div>
 
-	
-	
-	<div class="section-title">⚙️ Tiện ích</div>
-	<button class="btn"
-    onclick="openRomSource()">
-    🌐 Tải ROM Từ Kho Game Thùng
+<button class="btn" onclick="openRomSource()">
+    🌐 Tải ROM Từ Kho Game 🌐
 </button>
 
-    <label for="romInput"
-        class="btn"
-        style="text-align:center;display:block;box-sizing:border-box;">
-        📁 Tự Nạp File Rom Từ Máy
-    </label>
+<label for="romInput" class="btn" style="text-align:center;display:block;box-sizing:border-box;margin:6px auto;">
+    📁 Nạp File Rom Từ Máy 📁
+</label>
 
-    <input
-        type="file"
-        id="romInput"
-        accept=".zip,.7z">
+<input type="file" id="romInput" accept=".zip,.7z">
+
+<button class="btn" onclick="loadRomFromLink()" style="background: linear-gradient(145deg, #1a3a2a, #0a241a); border: 2px solid #66ff99; color: #66ff99;">
+    🔗 Load Game Từ Link Web 🔗
+</button>
 		
-		<button class="btn btn-hd" onclick="moBangHuongDan()">
-    📖 Hướng Dẫn Sử Dụng
+<button class="btn btn-hd" onclick="moBangHuongDan()">
+    📖 Hướng Dẫn Sử Dụng 📖
 </button>
 
     <div class="footer">
@@ -387,11 +382,15 @@ h1{
             </div>
 
             <div class="modal-item">
-                ✅ Nhấn <b>🌐 Tải ROM Từ Kho Game Thùng</b> để mở kho ROM MAME 0.78 trong tab mới và tải game yêu thích về máy.
+                ✅ Nhấn <b>🌐 Tải ROM Từ Kho Game Thùng</b> để mở kho ROM MAME 0.78 trong tab mới và tải game yêu thích về máy , hoặc copy link game đó để dán vào Load Game Từ Link nhé.
             </div>
 
             <div class="modal-item">
                 ✅ Sau khi tải ROM xong, dùng <b>📁 Tự Nạp File Rom Từ Máy</b> để chọn file ZIP vừa tải và chơi ngay.
+            </div>
+
+            <div class="modal-item">
+                ✅ Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link trực tiếp từ internet (như link archive.org).
             </div>
 
             <div class="modal-item">
@@ -404,6 +403,10 @@ h1{
 			
 			<div class="modal-item">
                 ✅ Khi Vào Game<b> Chú Ý:</b> nút Select là để nạp thẻ chơi ( phải nạp mới chơi được) , nút Star để chơi.
+            </div>
+			
+			<div class="modal-item">
+                ✅ Chế độ GAME<b> Nút 3 gạch ngang góc phải trên</b> có rất nhiều như restart lưu hay open game các nút bấm v...v...
             </div>
 			
 			<div class="modal-item">
@@ -433,30 +436,54 @@ document.addEventListener("selectstart",e=>{
 let isLoaderScriptLoaded=false;
 
 function openRomSource(){
-
     window.open(
         "https://archive.org/download/trancuong",
         "_blank"
     );
-
 }
 
 function loadDino(){
     startGame("roms/dino.zip");
 }
 
+// LẮNG NGHE CHỌN FILE TỪ MÁY
 document
 .getElementById("romInput")
 .addEventListener("change",function(e){
-
     const file=e.target.files[0];
-
     if(!file) return;
 
-    startGame(URL.createObjectURL(file));
+    startGame(URL.createObjectURL(file), file.name);
 });
 
-function startGame(romUrl){
+// HÀM XỬ LÝ NẠP FILE TỪ LINK WEB & ÉP CORS BYPASS
+function loadRomFromLink() {
+    let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "Link bên chổ trang web mở ra đó , bạn dán Link game nào chơi vào đây");
+    
+    // Nếu người dùng nhấn Cancel (No) hoặc không nhập gì thì dừng lại, trở lại giao diện cũ
+    if (!urlInput) return;
+    
+    let trimmedUrl = urlInput.trim();
+    if (trimmedUrl === "") return;
+
+    // GIẢI PHÁP SỬA LỖI CORS: Nếu phát hiện là link archive.org/download/, chuyển sang cấu trúc archive.org/cors/
+    if(trimmedUrl.includes("archive.org/download/")) {
+        trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
+    }
+
+    // Tự động bóc tách tên file từ đuôi link để lấy Game ID định danh cấu trúc
+    let detectedName = "";
+    try {
+        const parts = trimmedUrl.split('/');
+        detectedName = parts[parts.length - 1]; 
+    } catch(e) {
+        detectedName = "customrom.zip";
+    }
+
+    startGame(trimmedUrl, detectedName);
+}
+
+function startGame(romUrl, romName = ""){
 
     document.getElementById("menu-container").style.display="none";
     document.getElementById("game-box").style.display="block";
@@ -472,6 +499,13 @@ function startGame(romUrl){
     window.EJS_core="arcade";
 
     window.EJS_gameUrl=romUrl;
+
+    // Nếu có tên file, gán vào EJS_gameName để ép định danh lõi MAME xử lý mảng zip bộ nhớ
+    if(romName !== "") {
+        window.EJS_gameName = romName;
+    } else {
+        delete window.EJS_gameName;
+    }
 
     window.EJS_pathtodata=
     "https://cdn.emulatorjs.org/stable/data/";
@@ -530,28 +564,19 @@ function makeDraggable(element){
     /* TOUCH */
 
     element.addEventListener("touchstart",(e)=>{
-
         isDragging = true;
         hasMoved = false;
-
         const touch = e.touches[0];
-
         startX = touch.clientX;
         startY = touch.clientY;
-
         const rect = element.getBoundingClientRect();
-
         startLeft = rect.left;
         startTop = rect.top;
-
     },{passive:true});
 
     element.addEventListener("touchmove",(e)=>{
-
         if(!isDragging) return;
-
         const touch = e.touches[0];
-
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
 
@@ -560,76 +585,47 @@ function makeDraggable(element){
         }
 
         if(hasMoved){
-
             if(e.cancelable){
                 e.preventDefault();
             }
-
             let newLeft = startLeft + dx;
             let newTop  = startTop + dy;
 
-            newLeft = Math.max(
-                5,
-                Math.min(
-                    window.innerWidth - element.offsetWidth - 5,
-                    newLeft
-                )
-            );
-
-            newTop = Math.max(
-                5,
-                Math.min(
-                    window.innerHeight - element.offsetHeight - 5,
-                    newTop
-                )
-            );
+            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
+            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
 
             element.style.left = newLeft + "px";
             element.style.top  = newTop + "px";
         }
-
     },{passive:false});
 
     element.addEventListener("touchend",()=>{
-
         if(!isDragging) return;
-
         isDragging = false;
-
         if(!hasMoved){
             forceCloseGame();
         }
     });
 
     element.addEventListener("touchcancel",()=>{
-
         isDragging = false;
     });
-
 
     /* MOUSE */
 
     element.addEventListener("mousedown",(e)=>{
-
         e.preventDefault();
-
         isDragging = true;
         hasMoved = false;
-
         startX = e.clientX;
         startY = e.clientY;
-
         const rect = element.getBoundingClientRect();
-
         startLeft = rect.left;
         startTop = rect.top;
-
     });
 
     window.addEventListener("mousemove",(e)=>{
-
         if(!isDragging) return;
-
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
 
@@ -640,29 +636,14 @@ function makeDraggable(element){
         let newLeft = startLeft + dx;
         let newTop  = startTop + dy;
 
-        newLeft = Math.max(
-            5,
-            Math.min(
-                window.innerWidth - element.offsetWidth - 5,
-                newLeft
-            )
-        );
-
-        newTop = Math.max(
-            5,
-            Math.min(
-                window.innerHeight - element.offsetHeight - 5,
-                newTop
-            )
-        );
+        newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
+        newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
 
         element.style.left = newLeft + "px";
         element.style.top  = newTop + "px";
-
     });
 
     window.addEventListener("mouseup",()=>{
-
         isDragging = false;
     });
 }
@@ -682,15 +663,6 @@ function moBangHuongDan(){
 
 function dongBangHuongDan(){
     document.getElementById("guide-modal").style.display="none";
-}
-
-function openRomSource(){
-
-    window.open(
-        "https://archive.org/download/trancuong",
-        "_blank"
-    );
-
 }
 
 </script>

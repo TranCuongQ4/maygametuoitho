@@ -250,17 +250,17 @@
 </head>
 <body>
     <div id="menu-container">
-        <h1>🎮 KHO GAME TUỔI THƠ</h1>
+        <h1>🎮 GAME TUỔI THƠ 🎮</h1>
         <p>Hệ máy NES & SNES - Kỷ niệm tuổi thơ</p>
         <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
         
-        <div class="section-title">🎮 Game NES (4 Nút)</div>
-        <button class="btn" onclick="loadGame('fceumm', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp)</button>
-		<button class="btn" onclick="loadGame('fceumm', 'roms/260-in-1.nes')">🎮 260-in-1 (Bản tổng hợp)</button>
+        <div class="section-title">🎮 Game NES (4 Nút) 🎮</div>
+        <button class="btn" onclick="loadGame('fceumm', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp 1)</button>
+		<button class="btn" onclick="loadGame('fceumm', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp 2)</button>
         <button class="btn" onclick="loadGame('fceumm', 'roms/1200-in-1.nes')">🎮 1200-in-1 (Bản tổng hợp)</button>
 		<button class="btn" onclick="loadGame('fceumm', 'roms/xiaomali.nes')">🎮 Game Xèng Hoa Quả</button>
         
-        <div class="section-title">🕹️ Game SNES (6 Nút)</div>
+        <div class="section-title">🕹️ Game SNES (6 Nút) 🕹️</div>
         <button class="btn" onclick="loadGame('snes9x', 'roms/Aladdin (USA).sfc')">🧞 Aladdin (USA)</button>
         <button class="btn" onclick="loadGame('snes9x', 'roms/Final Fight 3 (USA).sfc')">👊 Final Fight 3 (USA)</button>
         <button class="btn" onclick="loadGame('snes9x', 'roms/International Superstar Soccer (USA).sfc')">⚽ Siêu Sao Bóng Đá</button>
@@ -269,13 +269,19 @@
         <button class="btn" onclick="snesSF2()">🥋 Street Fighter II Turbo</button>
         <button class="btn" onclick="loadGame('snes9x', 'roms/Super Bomberman 4 (Japan).sfc')">💣 Super Bomberman 4</button>
         <button class="btn" onclick="loadGame('snes9x', 'roms/Super Double Dragon (USA).sfc')">🐲 Super Double Dragon</button>
-		<div class="section-title">🕹️ Game Thùng Bỏ Thẻ Xưa</div>
-		<button class="btn btn-gt" onclick="window.location.href='mame.html'">🕹️ Game Thùng Ngày Xưa</button>
+		<div class="section-title">🕹️ Game Thùng Bỏ Thẻ Xưa 🕹️</div>
+		<button class="btn btn-gt" onclick="window.location.href='mame.html'">🕹️ Game Thùng Ngày Xưa 🕹️</button>
         
-        <div class="section-title">⚙️ Tiện ích</div>
-        <label for="file-input" class="btn" style="display: block; text-align: center; box-sizing: border-box;">📁 Tự nạp file ROM từ máy</label>
+        <div class="section-title">⚙️ Tiện ích ⚙️</div>
+		<button class="btn btn-gt" onclick="window.open('https://archive.org/download/2227nes/', '_blank')">🌐 Link Kho Game 🌐</button>
+        <label for="file-input" class="btn" style="display: block; text-align: center; box-sizing: border-box;">📁 Tự Nạp File ROM Từ Máy 📁</label>
         <input type="file" id="file-input" accept=".nes,.sfc,.smc,.zip">
-        <button class="btn btn-hd" onclick="moBangHuongDan()">📖 Hướng Dẫn Sử Dụng</button>
+        
+        <button class="btn" onclick="loadRomFromLink()" style="background: linear-gradient(145deg, #1a3a2a, #0a241a); border: 2px solid #66ff99; color: #66ff99; width: 90%; max-width: 340px; text-align: center; box-sizing: border-box; display: block; margin: 6px 0;">
+            🔗 Load Game Từ Link Web 🔗
+        </button>
+
+        <button class="btn btn-hd" onclick="moBangHuongDan()">📖 Hướng Dẫn Sử Dụng 📖</button>
         
         <div class="footer-credits">Thiết Kế Trần Cường - Zalo: 0907860662</div>
     </div>
@@ -289,7 +295,7 @@
 
     <div id="guide-modal">
         <div class="modal-content">
-            <div class="modal-title">📖 HƯỚNG DẪN SỬ DỤNG</div>
+            <div class="modal-title">📖 HƯỚNG DẪN SỬ DỤNG 📖</div>
             <div class="modal-body">
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
@@ -297,7 +303,11 @@
                 </div>
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
-                    <span>Sử dụng mục <b>Tự nạp file ROM</b> nếu muốn mở các game riêng có sẵn trên máy của bạn.</span>
+                    <span>Sử dụng mục <b>Tự nạp file ROM</b>Các file đuôi .nes là máy 2 nút , đuôi .sfc .smc là máy 4 nút.</span>
+                </div>
+                <div class="modal-item">
+                    <span class="modal-icon">✅</span>
+                    <span>Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link ROM trực tiếp từ internet trang tôi đã cho.</span>
                 </div>
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
@@ -306,6 +316,10 @@
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
                     <span>Nên bật chế độ tự động <b>Xoay ngang màn hình</b> điện thoại để có trải nghiệm góc nhìn tay cầm ảo tốt nhất.</span>
+                </div>
+				<div class="modal-item">
+                    <span class="modal-icon">✅</span>
+                    <span>Chế độ GAME <b>Nút 3 gạch ngang góc phải trên</b> có rất nhiều như restart lưu hay open game các nút bấm v...v...</span>
                 </div>
             </div>
             <button class="modal-btn" onclick="dongBangHuongDan()">ĐÃ HIỂU</button>
@@ -325,22 +339,54 @@
         let isLoaderScriptLoaded = false;
         
         function snesSF2() {
-            loadGame('snes9x', 'roms/Street Fighter II Turbo (V1.0) (E) [!].smc');
+            startEmulator('snes9x', CURRENT_PATH + 'roms/Street Fighter II Turbo (V1.0) (E) [!].smc', 'Street Fighter II Turbo (V1.0) (E) [!].smc');
         }
 
         function loadGame(system, romUrl) {
-            startEmulator(system, CURRENT_PATH + romUrl);
+            let romName = romUrl.split('/').pop();
+            startEmulator(system, CURRENT_PATH + romUrl, romName);
         }
         
+        // LẮNG NGHE CHỌN FILE TỪ MÁY
         document.getElementById('file-input').addEventListener('change', function(e) {
             var file = e.target.files[0];
             if (!file) return;
             var ext = file.name.split('.').pop().toLowerCase();
             var system = (ext === 'nes') ? 'fceumm' : 'snes9x';
-            startEmulator(system, URL.createObjectURL(file));
+            startEmulator(system, URL.createObjectURL(file), file.name);
         });
+
+        // HÀM XỬ LÝ NẠP FILE TỪ LINK WEB CHO HỆ MÁY NES/SNES
+        function loadRomFromLink() {
+            let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.nes, .sfc, .smc, .zip) của file ROM vào đây:", "Dán Link Từ Kho Game Trên Nhé");
+            
+            if (!urlInput) return; // Nhấn Cancel (No) quay lại giao diện cũ
+            
+            let trimmedUrl = urlInput.trim();
+            if (trimmedUrl === "") return;
+
+            // GIẢI PHÁP SỬA LỖI CORS CỦA ARCHIVE.ORG
+            if(trimmedUrl.includes("archive.org/download/")) {
+                trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
+            }
+
+            // Tự động bóc tách tên file thực tế từ liên kết để lấy Game ID định danh
+            let detectedName = "";
+            try {
+                const parts = trimmedUrl.split('/');
+                detectedName = decodeURIComponent(parts[parts.length - 1]); 
+            } catch(e) {
+                detectedName = "customrom.zip";
+            }
+
+            // Phân tích đuôi file để tự chọn lõi chạy tương ứng (nes -> fceumm, các loại khác -> snes9x)
+            let ext = detectedName.split('.').pop().toLowerCase();
+            let system = (ext === 'nes') ? 'fceumm' : 'snes9x';
+
+            startEmulator(system, trimmedUrl, detectedName);
+        }
         
-        function startEmulator(coreType, url) {
+        function startEmulator(coreType, url, romName = "") {
             document.getElementById('menu-container').style.display = 'none';
             document.getElementById('game-box').style.display = 'block';
             
@@ -350,6 +396,13 @@
             window.EJS_player = '#emulator';
             window.EJS_core = coreType;
             window.EJS_gameUrl = url;
+            
+            // Ép định danh tên file chuẩn hóa để lõi giả lập bung mảng dữ liệu bộ nhớ chính xác
+            if(romName !== "") {
+                window.EJS_gameName = romName;
+            } else {
+                delete window.EJS_gameName;
+            }
             
             window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
             window.EJS_corePath = 'https://cdn.emulatorjs.org/stable/data/cores/';
@@ -380,13 +433,12 @@
             window.location.reload();
         }
         
-        // LOGIC KÉO THẢ NÚT X ĐỎ ĐÃ ĐƯỢC FIX TOÀN DIỆN CHO CẢM ỨNG (TOUCH)
         function makeDraggable(element) {
             let isDragging = false;
             let startX, startY, startLeft, startTop;
             let hasMoved = false;
             
-            // XỬ LÝ TRÊN ĐIỆN THOẠI (TOUCH EVENTS)
+            /* TOUCH EVENTS */
             element.addEventListener('touchstart', (e) => {
                 isDragging = true;
                 hasMoved = false;
@@ -440,7 +492,7 @@
                 element.style.transition = '';
             });
             
-            // XỬ LÝ TRÊN MÁY TÍNH (MOUSE EVENTS)
+            /* MOUSE EVENTS */
             element.addEventListener('mousedown', (e) => {
                 e.preventDefault();
                 isDragging = true;
