@@ -131,7 +131,7 @@
             color: white; 
             border: 2px solid rgba(255, 255, 255, 0.5); 
             border-radius: 50%; 
-            width: 50px; 
+            width: 50px; 2
             height: 50px; 
             font-size: 24px; 
             font-weight: bold; 
@@ -163,7 +163,7 @@
             } 
         }
 
-        /* GIAO DIỆN BẢNG HƯỚNG DẪN DẠNG MODAL HIỆN ĐẠI */
+        /* GIAO DIỆN BẢNG HƯỚNG DẪN DẠNG MODAL */
         #guide-modal {
             display: none;
             position: fixed;
@@ -274,8 +274,9 @@
         
         <div class="section-title">⚙️ Tiện ích ⚙️</div>
 		<button class="btn btn-gt" onclick="window.open('https://archive.org/download/2227nes/', '_blank')">🌐 Link Kho Game 🌐</button>
+        
         <label for="file-input" class="btn" style="display: block; text-align: center; box-sizing: border-box;">📁 Tự Nạp File ROM Từ Máy 📁</label>
-        <input type="file" id="file-input" accept=".nes,.sfc,.smc,.zip">
+        <input type="file" id="file-input" accept=".nes,.sfc,.smc,.zip,.1,.2,.3,.4" multiple>
         
         <button class="btn" onclick="loadRomFromLink()" style="background: linear-gradient(145deg, #1a3a2a, #0a241a); border: 2px solid #66ff99; color: #66ff99; width: 90%; max-width: 340px; text-align: center; box-sizing: border-box; display: block; margin: 6px 0;">
             🔗 Load Game Từ Link Web 🔗
@@ -303,23 +304,15 @@
                 </div>
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
-                    <span>Sử dụng mục <b>Tự nạp file ROM</b>Các file đuôi .nes là máy 2 nút , đuôi .sfc .smc là máy 4 nút.</span>
+                    <span>Sử dụng mục <b>Tự nạp file ROM</b>. Đối với game sao chép đĩa cũ bị chia làm nhiều part (Ví dụ: SF002.1 và SF002.2), bạn hãy <b>quét chuột chọn hoặc giữ chọn cả 2 file cùng một lúc</b> rồi nhấn Open. Hệ thống sẽ tự xử lý gộp phân vùng bộ nhớ sạch.</span>
                 </div>
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
-                    <span>Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link ROM trực tiếp từ internet trang tôi đã cho.</span>
+                    <span>Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link ROM trực tiếp từ internet. Link dạng đa phân vùng đuôi .1 cần đặt cùng thư mục trên hosting.</span>
                 </div>
                 <div class="modal-item">
                     <span class="modal-icon">✅</span>
                     <span><b>Nút X màu đỏ</b> dùng để thoát game, bạn hoàn toàn có thể nhấn giữ để <b>kéo thả</b> tới vị trí khác nếu bị vướng tay.</span>
-                </div>
-                <div class="modal-item">
-                    <span class="modal-icon">✅</span>
-                    <span>Nên bật chế độ tự động <b>Xoay ngang màn hình</b> điện thoại để có trải nghiệm góc nhìn tay cầm ảo tốt nhất.</span>
-                </div>
-				<div class="modal-item">
-                    <span class="modal-icon">✅</span>
-                    <span>Chế độ GAME <b>Nút 3 gạch ngang góc phải trên</b> có rất nhiều như restart lưu hay open game các nút bấm v...v...</span>
                 </div>
             </div>
             <button class="modal-btn" onclick="dongBangHuongDan()">ĐÃ HIỂU</button>
@@ -342,48 +335,164 @@
             startEmulator('snes9x', CURRENT_PATH + 'roms/Street Fighter II Turbo (V1.0) (E) [!].smc', 'Street Fighter II Turbo (V1.0) (E) [!].smc');
         }
 
-        function loadGame(system, romUrl) {
+        // HÀM XỬ LÝ ĐỌC NHỊ PHÂN VÀ BÓC TÁCH HEADER ĐĨA SAO CHÉP (512 BYTES) CỦA CÁC PART SAU
+        function cleanAndMergeBuffers(buffers) {
+            let totalLength = 0;
+            let processedBuffers = [];
+
+            buffers.forEach((buf, index) => {
+                let view = new Uint8Array(buf);
+                let startOffset = 0;
+
+                if (view.length % 32768 === 512 || view.length % 8192 === 512) {
+                    if (index > 0) {
+                        startOffset = 512;
+                    }
+                }
+
+                let cleanSlice = view.subarray(startOffset);
+                processedBuffers.push(cleanSlice);
+                totalLength += cleanSlice.length;
+            });
+
+            let mergedRom = new Uint8Array(totalLength);
+            let currentOffset = 0;
+            for (let chunk of processedBuffers) {
+                mergedRom.set(chunk, currentOffset);
+                currentOffset += chunk.length;
+            }
+            return mergedRom.buffer;
+        }
+
+        // TỰ ĐỘNG TẢI QUA LINK WEB VÀ KHỬ HEADER RÁC CỦA ĐĨA PHÂN MẢNH VỚI CHUỖI ĐỊNH DẠNG .1 .2 CHUẨN
+        async function fetchAndCleanRomParts(firstPartUrl) {
+            let buffers = [];
+            let currentPartNum = 1;
+            let baseUrl = firstPartUrl;
+            
+            // Tìm vị trí của dấu chấm cuối cùng để bóc tách chính xác phần số (Ví dụ: từ .1 tách ra phần chữ đằng trước)
+            let lastDotIdx = firstPartUrl.lastIndexOf('.');
+            let ext = firstPartUrl.substring(lastDotIdx + 1);
+            
+            if (!isNaN(ext) && lastDotIdx !== -1) {
+                baseUrl = firstPartUrl.substring(0, lastDotIdx);
+            } else {
+                // Nếu không phải định dạng số phân vùng đĩa cổ, nạp trực tiếp như file đơn thường
+                const response = await fetch(firstPartUrl);
+                if (!response.ok) throw new Error("Lỗi nạp file đơn lẻ từ link");
+                return await response.arrayBuffer();
+            }
+
+            // Quét liên tục từ part 1 cho tới khi không tìm thấy file tiếp theo trên server
+            while (true) {
+                let currentPartUrl = `${baseUrl}.${currentPartNum}`;
+                try {
+                    const response = await fetch(currentPartUrl);
+                    if (!response.ok) break; 
+                    
+                    const buffer = await response.arrayBuffer();
+                    buffers.push(buffer);
+                    currentPartNum++;
+                } catch (e) {
+                    break;
+                }
+            }
+
+            if (buffers.length === 0) throw new Error("Không lấy được dữ liệu các phân vùng game.");
+            return cleanAndMergeBuffers(buffers);
+        }
+
+        async function loadGame(system, romUrl) {
             let romName = romUrl.split('/').pop();
-            startEmulator(system, CURRENT_PATH + romUrl, romName);
+            let lastDotIdx = romName.lastIndexOf('.');
+            let ext = romName.substring(lastDotIdx + 1);
+            
+            if (!isNaN(ext) && lastDotIdx !== -1) {
+                romName = romName.substring(0, lastDotIdx) + '.sfc';
+                try {
+                    let cleanBuffer = await fetchAndCleanRomParts(CURRENT_PATH + romUrl);
+                    let blobUrl = URL.createObjectURL(new Blob([cleanBuffer]));
+                    startEmulator(system, blobUrl, romName);
+                } catch(err) {
+                    alert("Lỗi xử lý file đĩa: " + err.message);
+                }
+            } else {
+                startEmulator(system, CURRENT_PATH + romUrl, romName);
+            }
         }
         
-        // LẮNG NGHE CHỌN FILE TỪ MÁY
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            var ext = file.name.split('.').pop().toLowerCase();
+        // LẮNG NGHE KHI BẠN CHỌN ĐỒNG THỜI CẢ FILE .1 VÀ .2 TRÊN THIẾT BỊ
+        document.getElementById('file-input').addEventListener('change', async function(e) {
+            var files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            
+            let finalBuffer;
+            let finalName = files[0].name;
+
+            if (files.length > 1) {
+                files.sort((a, b) => {
+                    let partA = parseInt(a.name.split('.').pop()) || 0;
+                    let partB = parseInt(b.name.split('.').pop()) || 0;
+                    return partA - partB;
+                });
+
+                let rawBuffers = [];
+                for (let file of files) {
+                    rawBuffers.push(await file.arrayBuffer());
+                }
+
+                finalBuffer = cleanAndMergeBuffers(rawBuffers);
+                let lastDotIdx = files[0].name.lastIndexOf('.');
+                finalName = files[0].name.substring(0, lastDotIdx) + '.sfc';
+            } else {
+                finalBuffer = await files[0].arrayBuffer();
+            }
+
+            var ext = finalName.split('.').pop().toLowerCase();
             var system = (ext === 'nes') ? 'fceumm' : 'snes9x';
-            startEmulator(system, URL.createObjectURL(file), file.name);
+            
+            let blobUrl = URL.createObjectURL(new Blob([finalBuffer]));
+            startEmulator(system, blobUrl, finalName);
         });
 
-        // HÀM XỬ LÝ NẠP FILE TỪ LINK WEB CHO HỆ MÁY NES/SNES
-        function loadRomFromLink() {
-            let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.nes, .sfc, .smc, .zip) của file ROM vào đây:", "Dán Link Từ Kho Game Trên Nhé");
-            
-            if (!urlInput) return; // Nhấn Cancel (No) quay lại giao diện cũ
+        // XỬ LÝ DÁN LINK ĐÃ ĐƯỢC FIX LỖI NHẬN DIỆN CHUỖI ĐUÔI SỐ
+        async function loadRomFromLink() {
+            let urlInput = prompt("Hãy dán đường dẫn link trực tiếp của file ROM vào đây (Ví dụ dán link file đuôi .1):", "http://");
+            if (!urlInput) return;
             
             let trimmedUrl = urlInput.trim();
             if (trimmedUrl === "") return;
 
-            // GIẢI PHÁP SỬA LỖI CORS CỦA ARCHIVE.ORG
             if(trimmedUrl.includes("archive.org/download/")) {
                 trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
             }
 
-            // Tự động bóc tách tên file thực tế từ liên kết để lấy Game ID định danh
             let detectedName = "";
             try {
                 const parts = trimmedUrl.split('/');
                 detectedName = decodeURIComponent(parts[parts.length - 1]); 
             } catch(e) {
-                detectedName = "customrom.zip";
+                detectedName = "customrom.sfc";
             }
 
-            // Phân tích đuôi file để tự chọn lõi chạy tương ứng (nes -> fceumm, các loại khác -> snes9x)
-            let ext = detectedName.split('.').pop().toLowerCase();
-            let system = (ext === 'nes') ? 'fceumm' : 'snes9x';
+            let lastDotIdx = detectedName.lastIndexOf('.');
+            let ext = detectedName.substring(lastDotIdx + 1);
+            let system = 'snes9x'; // Mặc định hệ SNES đối với dòng đĩa cổ này
 
-            startEmulator(system, trimmedUrl, detectedName);
+            if (!isNaN(ext) && lastDotIdx !== -1) {
+                detectedName = detectedName.substring(0, lastDotIdx) + '.sfc';
+                try {
+                    let cleanBuffer = await fetchAndCleanRomParts(trimmedUrl);
+                    let blobUrl = URL.createObjectURL(new Blob([cleanBuffer]));
+                    startEmulator(system, blobUrl, detectedName);
+                } catch(err) {
+                    alert("Không thể tải và gộp tự động từ link này. Hãy chắc chắn link tải trực tiếp (Direct link) và server không chặn CORS.\nChi tiết lỗi: " + err.message);
+                }
+            } else {
+                let simpleExt = detectedName.split('.').pop().toLowerCase();
+                if (simpleExt === 'nes') system = 'fceumm';
+                startEmulator(system, trimmedUrl, detectedName);
+            }
         }
         
         function startEmulator(coreType, url, romName = "") {
@@ -397,7 +506,6 @@
             window.EJS_core = coreType;
             window.EJS_gameUrl = url;
             
-            // Ép định danh tên file chuẩn hóa để lõi giả lập bung mảng dữ liệu bộ nhớ chính xác
             if(romName !== "") {
                 window.EJS_gameName = romName;
             } else {
