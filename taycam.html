@@ -13,27 +13,27 @@ html, body {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #1a1a1a;
-    font-family: Arial, sans-serif;
+    background: #000000;
+    font-family: 'Segoe UI', Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
 }
 
-/* THIẾT KẾ KHUNG TAY CẦM XOAY NGANG CHUẨN ĐIỆN THOẠI */
+/* KHUNG GIAO DIỆN TAY CẦM CHUẨN ĐEN TỐI THEO EMULATORJS */
 #gamepad-container {
     position: relative;
     width: 100%; height: 100%;
-    background: radial-gradient(circle, #2c2c2c 0%, #111111 100%);
+    background: #151515;
 }
 
-/* NÚT X ĐỎ DI CHUYỂN ĐƯỢC ĐỂ THOÁT RA MAME.HTML */
+/* NÚT X ĐỎ DI CHUYỂN ĐƯỢC */
 #close-btn {
     position: absolute;
     top: 15px; left: 15px;
     width: 45px; height: 45px;
     background: #ff3366;
     color: white;
-    font-size: 20px; font-weight: bold;
+    font-size: 22px; font-weight: bold;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #fff;
@@ -42,75 +42,92 @@ html, body {
     touch-action: none;
 }
 
-/* PHÒNG ĐỊNH DANH HIỂN THỊ CHỮ MỜ TRÊN NỀN */
 #room-tag {
     position: absolute;
     top: 15px; right: 20px;
-    color: rgba(255,255,255,0.3);
-    font-size: 14px; font-weight: bold;
+    color: rgba(255,255,204,0.4);
+    font-size: 13px; font-weight: bold;
 }
 
-/* CỤM ĐIỀU HƯỚNG D-PAD (BÊN TRÁI MÀN HÌNH) */
+/* CỤM ĐIỀU HƯỚNG D-PAD GIỐNG TRONG ẢNH CHỤP */
 .dpad {
     position: absolute;
-    bottom: 30px; left: 40px;
-    width: 140px; height: 140px;
+    bottom: 35px; left: 45px;
+    width: 130px; height: 130px;
 }
 .dpad-btn {
     position: absolute;
-    background: #333;
-    border: 2px solid #555;
-    border-radius: 8px;
+    background: #252525;
+    border: 1px solid #3c3c3c;
 }
-.dpad-btn:active { background: #00ffcc; }
+/* Hiệu ứng đỏ đậm khi bấm giống hệt vòng tròn D-pad đỏ trong ảnh */
+.dpad-btn:active { background: #800000; border-color: #ff3333; }
 
-#btn-up { top: 0; left: 48px; width: 44px; height: 48px; border-bottom: none; border-radius: 8px 8px 0 0; }
-#btn-down { bottom: 0; left: 48px; width: 44px; height: 48px; border-top: none; border-radius: 0 0 8px 8px; }
-#btn-left { top: 48px; left: 0; width: 48px; height: 44px; border-right: none; border-radius: 8px 0 0 8px; }
-#btn-right { top: 48px; right: 0; width: 48px; height: 44px; border-left: none; border-radius: 0 8px 8px 0; }
-.dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #222; }
+#btn-up { top: 0; left: 44px; width: 42px; height: 46px; border-radius: 6px 6px 0 0; }
+#btn-down { bottom: 0; left: 44px; width: 42px; height: 46px; border-radius: 0 0 6px 6px; }
+#btn-left { top: 44px; left: 0; width: 46px; height: 42px; border-radius: 6px 0 0 6px; }
+#btn-right { top: 44px; right: 0; width: 46px; height: 42px; border-radius: 0 6px 6px 0; }
+.dpad-center { position: absolute; top: 44px; left: 44px; width: 42px; height: 42px; background: #1a1a1a; }
 
-/* CỤM NÚT BẤM ĐIỀU KHIỂN X Y A B (BÊN PHẢI MÀN HÌNH CHUẨN EMULATORJS) */
+/* CỤM NÚT BẤM ĐIỀU KHIỂN CHUẨN EMULATORJS (X Y A B) */
 .action-group {
     position: absolute;
-    bottom: 25px; right: 40px;
-    width: 150px; height: 150px;
+    bottom: 35px; right: 45px;
+    width: 140px; height: 140px;
 }
 .action-btn {
     position: absolute;
-    width: 46px; height: 46px;
-    background: #444;
-    color: white;
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.1);
+    color: #e0e0e0;
     font-size: 18px; font-weight: bold;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid #666;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
 }
-#btn-Y { top: 0; left: 50px; background: #0099ff; }
-#btn-X { top: 50px; left: 0; background: #cc00cc; }
-#btn-B { top: 50px; right: 0; background: #ff3300; }
-#btn-A { bottom: 0; left: 50px; background: #00cc44; }
-.action-btn:active { background: #fff !important; color: #000; }
+.action-btn:active { background: #ffffff !important; color: #000000 !important; }
 
-/* CỤM NÚT CHỨC NĂNG SELECT / START / COIN (Ở GIỮA DƯỚI) */
+#btn-Y { top: 0; left: 48px; }
+#btn-X { top: 48px; left: 0; }
+#btn-B { top: 48px; right: 0; }
+#btn-A { bottom: 0; left: 48px; }
+
+/* CỤM NÚT CHỨC NĂNG Ở GIỮA DƯỚI (SELECT / START) */
 .sys-group {
     position: absolute;
-    bottom: 20px;
+    bottom: 50px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex; gap: 15px;
+    display: flex; gap: 10px;
 }
 .sys-btn {
-    background: #555;
-    color: white;
-    border: 1px solid #777;
-    padding: 8px 15px;
+    background: #252525;
+    color: #b0b0b0;
+    border: 1px solid #3c3c3c;
+    padding: 6px 14px;
     font-size: 11px; font-weight: bold;
-    border-radius: 15px;
-    text-transform: uppercase;
+    border-radius: 4px;
 }
 .sys-btn:active { background: #ffcc00; color: #000; }
+
+/* 🔥 THÊM 2 NÚT FAST VÀ SLOW Ở CẠNH DƯỚI CÙNG THEO ĐÚNG ẢNH CHỤP */
+.speed-group {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 40px;
+}
+.speed-btn {
+    background: #202020;
+    color: #8a8a8a;
+    border: 1px solid #2d2d2d;
+    padding: 4px 18px;
+    font-size: 10px;
+    border-radius: 4px;
+}
+.speed-btn:active { background: #fff; color: #000; }
 </style>
 </head>
 <body>
@@ -119,7 +136,7 @@ html, body {
     
     <div id="close-btn">✕</div>
     
-    <div id="room-tag">MÁY PHỤ: PHÒNG <span id="room-id-text">0000</span></div>
+    <div id="room-tag">TAY CẦM PHỤ - PHÒNG: <span id="room-id-text">0000</span></div>
 
     <div class="dpad">
         <div id="btn-up" class="dpad-btn" data-button="0"></div>
@@ -130,53 +147,51 @@ html, body {
     </div>
 
     <div class="sys-group">
-        <button class="sys-btn" id="btn-select" data-button="11">Select (Nạp Thẻ)</button>
-        <button class="sys-btn" id="btn-start" data-button="10">Start</button>
+        <button class="sys-btn" id="btn-select" data-button="10">Select</button>
+        <button class="sys-btn" id="btn-start" data-button="11">Start</button>
     </div>
 
     <div class="action-group">
-        <div id="btn-Y" class="action-btn" data-button="9">Y</div>
-        <div id="btn-X" class="action-btn" data-button="14">X</div>
-        <div id="btn-B" class="action-btn" data-button="8">B</div>
-        <div id="btn-A" class="action-btn" data-button="13">A</div>
+        <div id="btn-Y" class="action-btn" data-button="7">Y</div>
+        <div id="btn-X" class="action-btn" data-button="6">X</div>
+        <div id="btn-B" class="action-btn" data-button="5">B</div>
+        <div id="btn-A" class="action-btn" data-button="4">A</div>
+    </div>
+
+    <div class="speed-group">
+        <button class="speed-btn" id="btn-fast" data-button="12">Fast</button>
+        <button class="speed-btn" id="btn-slow" data-button="13">Slow</button>
     </div>
 
 </div>
 
 <script>
-// --- CẤU HÌNH FIREBASE ĐỒNG BỘ TÌNH TRẠNG CHUẨN ---
+// --- CẤU HÌNH CONFIG CHUẨN CỦA ANH CƯỜNG ---
 const firebaseConfig = {
     databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Lấy tham số Room từ URL thanh địa chỉ chuyển sang
 const urlParams = new URLSearchParams(window.location.search);
 const roomId = urlParams.get('room') || "1111";
 document.getElementById("room-id-text").innerText = roomId;
 
-// CHẶN CÁC SỰ KIỆN ZOOM VÀ CUỘN TRÊN TRÌNH DUYỆT DI ĐỘNG KHỎI LỖI
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
-// HÀM GỬI LỆNH ĐIỀU KHIỂN CỰC NHANH LÊN FIREBASE (DÙNG SET ĐỂ ĐÈ SỰ KIỆN LIÊN TỤC)
+// TỐI ƯU TỐC ĐỘ: Bắn trực tiếp dữ liệu phím dạng dẹp qua hàm update giúp Firebase đồng bộ tức thời
 function sendInputToFirebase(buttonId, value) {
-    db.ref("gamepads/" + roomId).set({
-        action: "gamepad_input",
-        button: buttonId,
-        value: value,
-        timestamp: Date.now()
-    });
+    const dataUpdate = {};
+    dataUpdate[buttonId] = value;
+    db.ref("gamepads/" + roomId).update(dataUpdate);
 }
 
-// LIÊN KẾT BẮT SỰ KIỆN CẢ ĐIỆN THOẠI (TOUCH) VÀ MÁY TÍNH (MOUSE)
-const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn');
+const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn, .speed-btn');
 
 allButtons.forEach(btn => {
     const btnId = btn.getAttribute('data-button');
     
-    // Khi nhấn nút xuống (value = 1)
     btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
         sendInputToFirebase(btnId, 1);
@@ -186,7 +201,6 @@ allButtons.forEach(btn => {
         sendInputToFirebase(btnId, 1);
     });
 
-    // Khi nhả nút ra (value = 0)
     btn.addEventListener('touchend', (e) => {
         e.preventDefault();
         sendInputToFirebase(btnId, 0);
@@ -197,11 +211,9 @@ allButtons.forEach(btn => {
     });
 });
 
-// XỬ LÝ LẬP TRÌNH KÉO THẢ VÀ NHẤN NÚT X ĐỎ TRỞ VỀ MAME.HTML
 function makeElementDraggable(element) {
     let isDragging = false;
-    let startX, startY, startLeft, startTop;
-    let hasMoved = false;
+    let startX, startY, startLeft, startTop, hasMoved = false;
 
     element.addEventListener("touchstart", (e) => {
         isDragging = true;
@@ -235,7 +247,6 @@ function makeElementDraggable(element) {
     element.addEventListener("touchend", () => {
         isDragging = false;
         if (!hasMoved) {
-            // Nếu chỉ click chứ không phải kéo thả, thực hiện thoát quay về trang chủ
             window.location.href = "mame.html";
         }
     });
