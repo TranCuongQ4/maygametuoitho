@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-
 html,body{
     margin:0;
     padding:0;
@@ -90,6 +89,13 @@ h1{
     color: #00ffcc; 
 }
 
+/* 🔥 NÚT TAY CẦM PHỤ THIẾT KẾ ĐẸP MẮT THEO YÊU CẦU CỦA ANH */
+.btn-taycam {
+    background: linear-gradient(145deg, #ffcc00, #cc9900);
+    border: 2px solid #fff;
+    color: #000;
+}
+
 #romInput{
     display:none;
 }
@@ -146,7 +152,7 @@ h1{
     font-weight:bold;
 }
 
-#guide-modal, #online-modal {
+#guide-modal {
     display:none;
     position:fixed;
     top:0;
@@ -201,7 +207,6 @@ h1{
     border-radius:8px;
     cursor:pointer;
     width:100%;
-    margin-top: 5px;
 }
 
 .section-title {
@@ -213,25 +218,6 @@ h1{
     padding-top:15px;
     width:90%;
 }
-
-/* Thêm style cho nút chế độ online */
-.btn-online {
-    background: linear-gradient(145deg, #cc9900, #997300);
-    border: 1px solid #ffcc00;
-    color: #fff;
-}
-#room-link-input {
-    width: 100%;
-    padding: 8px;
-    background: #222;
-    border: 1px solid #444;
-    color: #00ffcc;
-    border-radius: 4px;
-    margin-top: 5px;
-    box-sizing: border-box;
-    text-align: center;
-}
-
 </style>
 </head>
 <body>
@@ -253,81 +239,85 @@ h1{
         ← Trở Về Game Băng Đĩa
     </button>
 
-    <button class="btn" onclick="selectPlayMode('roms/dino.zip', 'dino.zip')">
+    <button class="btn btn-taycam" onclick="openTayCamPhuModal()">
+        🎮 KÍCH HOẠT TAY CẦM PHỤ (MÁY 2) 🎮
+    </button>
+
+    <button class="btn" onclick="askPlayMode('roms/dino.zip')">
         ⚜ Trò Bộ Đội Nổi Tiếng ⚜
     </button>
 	
-	<button class="btn" onclick="selectPlayMode('roms/knights.zip', 'knights.zip')">
-    幕 Knights of the Round 幕
-</button>
+	<button class="btn" onclick="askPlayMode('roms/knights.zip')">
+        ⚜ Knights of the Round ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/1941.zip', '1941.zip')">
-    幕 1941: COUNTER ATTACK 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/1941.zip')">
+        ⚜ 1941: COUNTER ATTACK ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/1942.zip', '1942.zip')">
-    幕 1942 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/1942.zip')">
+        ⚜ 1942 ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/dynwar.zip', 'dynwar.zip')">
-    幕 Tam Quốc Chí 1 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/dynwar.zip')">
+        ⚜ Tam Quốc Chí 1 ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/wof.zip', 'wof.zip')">
-    幕 Tam Quốc Chí 2 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/wof.zip')">
+        ⚜ Tam Quốc Chí 2 ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/ffight.zip', 'ffight.zip')">
-    幕 Anh Hùng Đường Phố 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/ffight.zip')">
+        ⚜ Anh Hùng Đường Phố ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/mercs.zip', 'mercs.zip')">
-    幕 Rambo Mecrs 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/mercs.zip')">
+        ⚜ Rambo Mecrs ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/sf2.zip', 'sf2.zip')">
-    幕 Street Fighter II 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/sf2.zip')">
+        ⚜ Street Fighter II ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/contra.zip', 'contra.zip')">
-    幕 Contra 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/contra.zip')">
+        ⚜ Contra ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/64street.zip', '64street.zip')">
-    幕 64 Street 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/64street.zip')">
+        ⚜ 64 Street ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/batsugun.zip', 'batsugun.zip')">
-    幕 Bắn Máy Bay Batsugun 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/batsugun.zip')">
+        ⚜ Bắn Máy Bay Batsugun ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/ssriders.zip', 'ssriders.zip')">
-    幕 Cao Bồi Viễn Tây 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/ssriders.zip')">
+        ⚜ Cao Bồi Viễn Tây ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/tmnt.zip', 'tmnt.zip')">
-    幕 Ningia Rùa 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/tmnt.zip')">
+        ⚜ Ningia Rùa ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/3wonders.zip', '3wonders.zip')">
-    幕 Three Wonder 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/3wonders.zip')">
+        ⚜ Three Wonder ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('megaman.zip', 'megaman.zip')">
-    幕 Mega Man 幕
-</button>
+    <button class="btn" onclick="askPlayMode('megaman.zip')">
+        ⚜ Mega Man ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/robocop2.zip', 'robocop2.zip')">
-    幕 Robocop 2 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/robocop2.zip')">
+        ⚜ Robocop 2 ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/gunforc2.zip', 'gunforc2.zip')">
-    幕 Gun Force II 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/gunforc2.zip')">
+        ⚜ Gun Force II ⚜
+    </button>
 
-<button class="btn" onclick="selectPlayMode('roms/punisher.zip', 'punisher.zip')">
-    幕 Kẻ Trừng Phạt 幕
-</button>
+    <button class="btn" onclick="askPlayMode('roms/punisher.zip')">
+        ⚜ Kẻ Trừng Phạt ⚜
+    </button>
 
 <div class="section-title">☛ Game Thùng Siêu Thị ☚</div>
 
@@ -366,67 +356,45 @@ h1{
     </div>
 </div>
 
-<div id="online-modal">
-    <div class="modal-content">
-        <div class="modal-title" id="online-title">CHỌN CHẾ ĐỘ CHƠI</div>
-        <div class="modal-body" id="online-body" style="text-align:center;">
-            <button class="modal-btn" style="background:linear-gradient(145deg,#333,#222); color:#fff; border:1px solid #555;" onclick="playOfflineNow()">🕹️ Chơi Một Mình (Offline)</button>
-            <button class="modal-btn" style="background:linear-gradient(145deg,#ffcc00,#cc9900);" onclick="createOnlineRoom()">🌐 Tạo Phòng Chơi 2 Người</button>
-            <div id="room-info-section" style="display:none; margin-top:15px; border-top:1px solid #444; padding-top:10px;">
-                <p style="color:#00ffcc; font-weight:bold; margin:5px 0;">Gửi link này cho bạn chơi:</p>
-                <input type="text" id="room-link-input" readonly>
-                <button class="modal-btn" style="background:#00ffcc; color:#000;" onclick="copyRoomLink()">📋 Copy Đường Dẫn</button>
-                <p id="connection-status" style="color:#ff3366; font-weight:bold; margin-top:10px;">⌛ Đang đợi bạn vào phòng...</p>
-            </div>
-        </div>
-        <button class="modal-btn" style="background:#ff3366; color:#fff;" onclick="closeOnlineModal()">ĐÓNG</button>
-    </div>
-</div>
-
 <div id="guide-modal">
     <div class="modal-content">
         <div class="modal-title">📖 HƯỚNG DẪN SỬ DỤNG</div>
         <div class="modal-body">
-            <div class="modal-item">✅ Nhấn <b>🦖 Bộ Đội</b> để vào chơi ngay game Cadillacs and Dinosaurs , tương tự các game khác.</div>
-            <div class="modal-item">✅ Nhấn <b>🌐 Tải ROM Từ Kho Game Thùng</b> để mở kho ROM MAME 0.78 trong tab mới và tải game yêu thích về máy.</div>
-            <div class="modal-item">✅ Sau khi tải ROM xong, dùng <b>📁 Tự Nạp File Rom Từ Máy</b> để chọn file ZIP vừa tải và chơi ngay.</div>
-            <div class="modal-item">✅ Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link trực tiếp từ internet.</div>
-            <div class="modal-item">✅ <b>Nút X màu đỏ</b> dùng để thoát game. Có thể kéo thả tới vị trí khác nếu che mất nút điều khiển.</div>
-            <div class="modal-item">✅ Nên bật <b>Xoay ngang màn hình</b> để có trải nghiệm game tốt nhất.</div>
-			<div class="modal-item">✅ Khi Vào Game<b> Chú Ý:</b> nút Select là để nạp thẻ chơi ( phải nạp mới chơi được) , nút Star để chơi.</div>
-			<div class="modal-item">✅ Chế độ GAME<b> Nút 3 gạch ngang góc phải trên</b> có rất nhiều chức năng...</div>
-			<div class="modal-item">✅ Trần Cường<b> Zalo: </b>0907860662</div>
+            <div class="modal-item">✅ Nhấn vào game muốn chơi sẽ hiện 2 lựa chọn: <b>Chơi 1 mình</b> hoặc <b>Chơi cùng bạn bè</b>.</div>
+            <div class="modal-item">✅ Nếu chọn Chơi cùng bạn bè, hệ thống cấp mã Số Phòng. Hãy gửi mã này cho bạn chơi nhập vào mục <b>Tay Cầm Phụ</b>.</div>
+            <div class="modal-item">✅ Trần Cường <b>Zalo:</b> 0907860662</div>
         </div>
         <button class="modal-btn" onclick="dongBangHuongDan()">ĐÃ HIỂU</button>
     </div>
 </div>
 
 <script>
-document.addEventListener("contextmenu",e=>{ e.preventDefault(); });
-document.addEventListener("selectstart",e=>{ e.preventDefault(); });
+// --- CẤU HÌNH FIREBASE CHUẨN CỦA ANH CƯỜNG ---
+const firebaseConfig = {
+    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-let isLoaderScriptLoaded=false;
-let currentSelectedRomUrl = "";
-let currentSelectedRomName = "";
+let currentRoomId = null;
+let isLoaderScriptLoaded = false;
+
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("selectstart", e => e.preventDefault());
 
 function openRomSource(){
     window.open("https://archive.org/download/trancuong", "_blank");
 }
 
-function loadDino(){
-    selectPlayMode("roms/dino.zip", "dino.zip");
-}
-
 // LẮNG NGHE CHỌN FILE TỪ MÁY
-document.getElementById("romInput").addEventListener("change",function(e){
-    const file=e.target.files[0];
+document.getElementById("romInput").addEventListener("change", function(e){
+    const file = e.target.files[0];
     if(!file) return;
-    selectPlayMode(URL.createObjectURL(file), file.name);
+    askPlayMode(URL.createObjectURL(file), file.name);
 });
 
-// HÀM XỬ LÝ NẠP FILE TỪ LINK WEB & ÉP CORS BYPASS
 function loadRomFromLink() {
-    let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "Link bên chổ trang web mở ra đó , bạn dán Link game nào chơi vào đây");
+    let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "");
     if (!urlInput) return;
     let trimmedUrl = urlInput.trim();
     if (trimmedUrl === "") return;
@@ -435,52 +403,81 @@ function loadRomFromLink() {
         trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
     }
 
-    let detectedName = "";
+    let detectedName = "customrom.zip";
     try {
         const parts = trimmedUrl.split('/');
         detectedName = parts[parts.length - 1]; 
-    } catch(e) {
-        detectedName = "customrom.zip";
-    }
-    selectPlayMode(trimmedUrl, detectedName);
+    } catch(e){}
+
+    askPlayMode(trimmedUrl, detectedName);
 }
 
-// HÀM TRUNG GIAN ĐỂ CHỌN CHẾ ĐỘ CHƠI ONLINE HOẶC OFFLINE
-function selectPlayMode(romUrl, romName) {
-    currentSelectedRomUrl = romUrl;
-    currentSelectedRomName = romName;
+// BƯỚC HỎI CHẾ ĐỘ CHƠI THEO Ý CỦA ANH
+function askPlayMode(romUrl, romName = "") {
+    const mode = confirm("Bấm [OK] để 'Chơi cùng bạn bè' (Hiện mã kết nối tay cầm Máy 2)\nBấm [Cancel] để 'Chơi 1 mình' bình thường.");
     
-    // Nếu link URL chứa thông tin phòng rồi thì bỏ qua bảng chọn, vào thẳng kết nối Khách
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('room')) {
-        return; 
+    if (mode) {
+        // Tạo mã phòng ngẫu nhiên gồm 4 chữ số cho nhanh gọn
+        currentRoomId = Math.floor(1000 + Math.random() * 9000);
+        
+        // Đưa mã phòng lên Firebase và xóa dữ liệu phím cũ nếu có
+        db.ref("gamepads/" + currentRoomId).remove();
+        
+        alert("MÃ PHÒNG KẾT NỐI CỦA BẠN LÀ: " + currentRoomId + "\nHãy đưa mã này cho người thứ 2 nhập vào máy của họ nhé!");
+        
+        // Kích hoạt lắng nghe lệnh điều khiển từ tay cầm ảo gửi lên
+        listenToRemoteGamepad(currentRoomId);
     }
     
-    document.getElementById("online-modal").style.display = "flex";
-    document.getElementById("room-info-section").style.display = "none";
-    document.getElementById("online-title").textContent = "CHỌN CHẾ ĐỘ CHƠI";
+    startGame(romUrl, romName);
 }
 
-function playOfflineNow() {
-    closeOnlineModal();
-    startGame(currentSelectedRomUrl, currentSelectedRomName);
+// HÀM LẮNG NGHE TAY CẦM PHỤ TỪ FIREBASE ĐẨY VÀO LÕI MAME (MÁY 1)
+function listenToRemoteGamepad(roomId) {
+    db.ref("gamepads/" + roomId).on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // Khi nhận được sự kiện nút bấm từ Máy 2 gửi lên
+        if (data.action === "gamepad_input" && window.EJS_emulator) {
+            try {
+                // targetPlayer = 2 đại diện cho cổng tay cầm số 2 (Máy phụ)
+                const playerIndex = 1; // 0 là P1, 1 là P2
+                const buttonId = parseInt(data.button);
+                const value = parseInt(data.value); // 1 là nhấn, 0 là nhả
+                
+                if (window.EJS_emulator.api && typeof window.EJS_emulator.api.setGamepadState === "function") {
+                    window.EJS_emulator.api.setGamepadState(playerIndex, buttonId, value);
+                }
+                if (window.EJS_emulator.gameManager && typeof window.EJS_emulator.gameManager.simulateInput === "function") {
+                    window.EJS_emulator.gameManager.simulateInput(playerIndex, buttonId, value);
+                }
+            } catch(err){}
+        }
+    });
 }
 
-function closeOnlineModal() {
-    document.getElementById("online-modal").style.display = "none";
+// CHỨC NĂNG KHI NHẤN NÚT "TAY CẦM PHỤ" ĐỂ NHẬP LINK/MÃ PHÒNG
+function openTayCamPhuModal() {
+    let roomIdInput = prompt("Nhập MÃ PHÒNG từ Máy 1 để kết nối tay cầm phụ:");
+    if (!roomIdInput) return;
+    let room = roomIdInput.trim();
+    if (room === "") return;
+    
+    // Chuyển hướng trang sang giao diện chỉ chuyên về tay cầm
+    window.location.href = "taycam.html?room=" + room;
 }
 
-// CHỈNH SỬA HÀM STARTGAME ĐỂ ĐỒNG BỘ VỚI HỆ THỐNG ONLINE
 function startGame(romUrl, romName = ""){
     document.getElementById("menu-container").style.display="none";
     document.getElementById("game-box").style.display="block";
 
-    const container= document.getElementById("emulator-container");
-    container.innerHTML= '<div id="emulator"></div>';
+    const container = document.getElementById("emulator-container");
+    container.innerHTML = '<div id="emulator"></div>';
 
-    window.EJS_player="#emulator";
-    window.EJS_core="arcade";
-    window.EJS_gameUrl=romUrl;
+    window.EJS_player = "#emulator";
+    window.EJS_core = "arcade";
+    window.EJS_gameUrl = romUrl;
 
     if(romName !== "") {
         window.EJS_gameName = romName;
@@ -488,27 +485,38 @@ function startGame(romUrl, romName = ""){
         delete window.EJS_gameName;
     }
 
-    window.EJS_pathtodata= "https://cdn.emulatorjs.org/stable/data/";
-    window.EJS_corePath= "https://cdn.emulatorjs.org/stable/data/cores/";
+    window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
+    window.EJS_corePath = "https://cdn.emulatorjs.org/stable/data/cores/";
 	window.EJS_language = "en";
-    window.EJS_startOnLoaded=true;
+    window.EJS_startOnLoaded = true;
+
+    // Cấu hình ép phần cứng giả lập nhận diện 2 tay cầm chơi độc lập
+    window.EJS_players = 2;
+    window.EJS_maxPlayers = 2;
+    window.EJS_gamepad = true;
+
+    window.EJS_onGameStart = function() {
+        if (window.EJS_emulator && window.EJS_emulator.api) {
+            try {
+                if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
+                    window.EJS_emulator.api.setControllerPortDevice(0, 1); // Cổng 1 -> Tay cầm chuẩn
+                    window.EJS_emulator.api.setControllerPortDevice(1, 1); // Cổng 2 -> Tay cầm chuẩn Máy phụ
+                }
+            } catch (err){}
+        }
+    };
 
     window.dispatchEvent(new Event("resize"));
 
-    // ĐOẠN KHỞI CHẠY CORE HOẶC TẢI LOADER LOI SCRIPT
     if(!isLoaderScriptLoaded){
-        const script= document.createElement("script");
-        script.src= "https://cdn.emulatorjs.org/stable/data/loader.js";
-        script.onload=function(){
-            isLoaderScriptLoaded=true;
-            setupOnlineKeySync(); // Kích hoạt bộ bắt sự kiện phím sau khi script load xong
-        };
+        const script = document.createElement("script");
+        script.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
+        script.onload = function(){ isLoaderScriptLoaded = true; };
         document.head.appendChild(script);
-    }else{
-        if(typeof EJS_Emulator==="function"){
+    } else {
+        if(typeof EJS_Emulator === "function"){
             new EJS_Emulator(document.getElementById("emulator"), window);
-            setupOnlineKeySync(); // Kích hoạt bộ bắt phím
-        }else{
+        } else {
             window.location.reload();
         }
     }
@@ -541,9 +549,7 @@ function makeDraggable(element){
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
 
-        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
-            hasMoved = true;
-        }
+        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){ hasMoved = true; }
 
         if(hasMoved){
             if(e.cancelable){ e.preventDefault(); }
@@ -561,44 +567,14 @@ function makeDraggable(element){
         isDragging = false;
         if(!hasMoved){ forceCloseGame(); }
     });
-
-    element.addEventListener("touchcancel",()=>{ isDragging = false; });
-
-    element.addEventListener("mousedown",(e)=>{
-        e.preventDefault();
-        isDragging = true;
-        hasMoved = false;
-        startX = e.clientX;
-        startY = e.clientY;
-        const rect = element.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-    });
-
-    window.addEventListener("mousemove",(e)=>{
-        if(!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){ hasMoved = true; }
-        let newLeft = startLeft + dx;
-        let newTop  = startTop + dy;
-        newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
-        newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
-        element.style.left = newLeft + "px";
-        element.style.top  = newTop + "px";
-    });
-
-    window.addEventListener("mouseup",()=>{ isDragging = false; });
 }
 
-const closeBtn= document.getElementById("custom-close-btn");
+const closeBtn = document.getElementById("custom-close-btn");
 makeDraggable(closeBtn);
 closeBtn.addEventListener("click",()=>{ forceCloseGame(); });
 
 function moBangHuongDan(){ document.getElementById("guide-modal").style.display="flex"; }
 function dongBangHuongDan(){ document.getElementById("guide-modal").style.display="none"; }
 </script>
-
-<script src="choionline.js"></script>
 </body>
 </html>

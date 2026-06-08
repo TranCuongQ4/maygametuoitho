@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Tay Cầm Phụ - Máy 2</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* THIẾT KẾ KHUNG TAY CẦM XOAY NGANG CHUẨN ĐIỆN THOẠI */
+#gamepad-container {
+    position: relative;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, #2c2c2c 0%, #111111 100%);
+}
+
+/* NÚT X ĐỎ DI CHUYỂN ĐƯỢC ĐỂ THOÁT RA MAME.HTML */
+#close-btn {
+    position: absolute;
+    top: 15px; left: 15px;
+    width: 45px; height: 45px;
+    background: #ff3366;
+    color: white;
+    font-size: 20px; font-weight: bold;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff;
+    cursor: pointer; z-index: 999;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    touch-action: none;
+}
+
+/* PHÒNG ĐỊNH DANH HIỂN THỊ CHỮ MỜ TRÊN NỀN */
+#room-tag {
+    position: absolute;
+    top: 15px; right: 20px;
+    color: rgba(255,255,255,0.3);
+    font-size: 14px; font-weight: bold;
+}
+
+/* CỤM ĐIỀU HƯỚNG D-PAD (BÊN TRÁI MÀN HÌNH) */
+.dpad {
+    position: absolute;
+    bottom: 30px; left: 40px;
+    width: 140px; height: 140px;
+}
+.dpad-btn {
+    position: absolute;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 8px;
+}
+.dpad-btn:active { background: #00ffcc; }
+
+#btn-up { top: 0; left: 48px; width: 44px; height: 48px; border-bottom: none; border-radius: 8px 8px 0 0; }
+#btn-down { bottom: 0; left: 48px; width: 44px; height: 48px; border-top: none; border-radius: 0 0 8px 8px; }
+#btn-left { top: 48px; left: 0; width: 48px; height: 44px; border-right: none; border-radius: 8px 0 0 8px; }
+#btn-right { top: 48px; right: 0; width: 48px; height: 44px; border-left: none; border-radius: 0 8px 8px 0; }
+.dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #222; }
+
+/* CỤM NÚT BẤM ĐIỀU KHIỂN X Y A B (BÊN PHẢI MÀN HÌNH CHUẨN EMULATORJS) */
+.action-group {
+    position: absolute;
+    bottom: 25px; right: 40px;
+    width: 150px; height: 150px;
+}
+.action-btn {
+    position: absolute;
+    width: 46px; height: 46px;
+    background: #444;
+    color: white;
+    font-size: 18px; font-weight: bold;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #666;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.3);
+}
+#btn-Y { top: 0; left: 50px; background: #0099ff; }
+#btn-X { top: 50px; left: 0; background: #cc00cc; }
+#btn-B { top: 50px; right: 0; background: #ff3300; }
+#btn-A { bottom: 0; left: 50px; background: #00cc44; }
+.action-btn:active { background: #fff !important; color: #000; }
+
+/* CỤM NÚT CHỨC NĂNG SELECT / START / COIN (Ở GIỮA DƯỚI) */
+.sys-group {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 15px;
+}
+.sys-btn {
+    background: #555;
+    color: white;
+    border: 1px solid #777;
+    padding: 8px 15px;
+    font-size: 11px; font-weight: bold;
+    border-radius: 15px;
+    text-transform: uppercase;
+}
+.sys-btn:active { background: #ffcc00; color: #000; }
+</style>
+</head>
+<body>
+
+<div id="gamepad-container">
+    
+    <div id="close-btn">✕</div>
+    
+    <div id="room-tag">MÁY PHỤ: PHÒNG <span id="room-id-text">0000</span></div>
+
+    <div class="dpad">
+        <div id="btn-up" class="dpad-btn" data-button="0"></div>
+        <div id="btn-down" class="dpad-btn" data-button="1"></div>
+        <div id="btn-left" class="dpad-btn" data-button="2"></div>
+        <div id="btn-right" class="dpad-btn" data-button="3"></div>
+        <div class="dpad-center"></div>
+    </div>
+
+    <div class="sys-group">
+        <button class="sys-btn" id="btn-select" data-button="11">Select (Nạp Thẻ)</button>
+        <button class="sys-btn" id="btn-start" data-button="10">Start</button>
+    </div>
+
+    <div class="action-group">
+        <div id="btn-Y" class="action-btn" data-button="9">Y</div>
+        <div id="btn-X" class="action-btn" data-button="14">X</div>
+        <div id="btn-B" class="action-btn" data-button="8">B</div>
+        <div id="btn-A" class="action-btn" data-button="13">A</div>
+    </div>
+
+</div>
+
+<script>
+// --- CẤU HÌNH FIREBASE ĐỒNG BỘ TÌNH TRẠNG CHUẨN ---
+const firebaseConfig = {
+    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Lấy tham số Room từ URL thanh địa chỉ chuyển sang
+const urlParams = new URLSearchParams(window.location.search);
+const roomId = urlParams.get('room') || "1111";
+document.getElementById("room-id-text").innerText = roomId;
+
+// CHẶN CÁC SỰ KIỆN ZOOM VÀ CUỘN TRÊN TRÌNH DUYỆT DI ĐỘNG KHỎI LỖI
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+
+// HÀM GỬI LỆNH ĐIỀU KHIỂN CỰC NHANH LÊN FIREBASE (DÙNG SET ĐỂ ĐÈ SỰ KIỆN LIÊN TỤC)
+function sendInputToFirebase(buttonId, value) {
+    db.ref("gamepads/" + roomId).set({
+        action: "gamepad_input",
+        button: buttonId,
+        value: value,
+        timestamp: Date.now()
+    });
+}
+
+// LIÊN KẾT BẮT SỰ KIỆN CẢ ĐIỆN THOẠI (TOUCH) VÀ MÁY TÍNH (MOUSE)
+const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn');
+
+allButtons.forEach(btn => {
+    const btnId = btn.getAttribute('data-button');
+    
+    // Khi nhấn nút xuống (value = 1)
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        sendInputToFirebase(btnId, 1);
+    });
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sendInputToFirebase(btnId, 1);
+    });
+
+    // Khi nhả nút ra (value = 0)
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        sendInputToFirebase(btnId, 0);
+    });
+    btn.addEventListener('mouseup', (e) => {
+        e.preventDefault();
+        sendInputToFirebase(btnId, 0);
+    });
+});
+
+// XỬ LÝ LẬP TRÌNH KÉO THẢ VÀ NHẤN NÚT X ĐỎ TRỞ VỀ MAME.HTML
+function makeElementDraggable(element) {
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    let hasMoved = false;
+
+    element.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        hasMoved = false;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const rect = element.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+    }, {passive: true});
+
+    element.addEventListener("touchmove", (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) { hasMoved = true; }
+
+        if (hasMoved) {
+            let newLeft = startLeft + dx;
+            let newTop = startTop + dy;
+            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
+            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
+            element.style.left = newLeft + "px";
+            element.style.top = newTop + "px";
+        }
+    });
+
+    element.addEventListener("touchend", () => {
+        isDragging = false;
+        if (!hasMoved) {
+            // Nếu chỉ click chứ không phải kéo thả, thực hiện thoát quay về trang chủ
+            window.location.href = "mame.html";
+        }
+    });
+}
+
+makeElementDraggable(document.getElementById("close-btn"));
+</script>
+
+</body>
+</html>
