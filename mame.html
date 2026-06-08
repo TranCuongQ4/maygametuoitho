@@ -224,17 +224,14 @@ h1{
 <div id="menu-container">
 
     <h1>🕹️ GAME THÙNG 🕹️</h1>
-
     <div class="subtitle">Trò Chơi Ngày Xưa</div>
-
     <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
 
     <button class="btn btn-back" onclick="window.location.href='index.html'">← Trở Về Game Băng Đĩa</button>
-
     <button class="btn btn-taycam" onclick="openTayCamPhuModal()">🎮 KÍCH HOẠT TAY CẦM PHỤ (MÁY 2) 🎮</button>
 
     <button class="btn" onclick="askPlayMode('roms/dino.zip')">⚜ Trò Bộ Đội Nổi Tiếng ⚜</button>
-	<button class="btn" onclick="askPlayMode('roms/knights.zip')">⚜ Knights of the Round ⚜</button>
+    <button class="btn" onclick="askPlayMode('roms/knights.zip')">⚜ Knights of the Round ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/1941.zip')">⚜ 1941: COUNTER ATTACK ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/1942.zip')">⚜ 1942 ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/dynwar.zip')">⚜ Tam Quốc Chí 1 ⚜</button>
@@ -295,7 +292,7 @@ const db = firebase.database();
 let currentRoomId = null;
 let isLoaderScriptLoaded = false;
 
-// Mảng đệm lưu trạng thái 16 nút bấm của Tay Cầm Máy 2 (Mặc định bằng 0 tức là nhả nút)
+// Khởi tạo mảng đệm cục bộ lưu trạng thái phím của Player 2 (mặc định 0 là nhả nút)
 let remoteGamepadState = new Array(16).fill(0);
 
 document.addEventListener("contextmenu", e => e.preventDefault());
@@ -338,29 +335,27 @@ function askPlayMode(romUrl, romName = "") {
     startGame(romUrl, romName);
 }
 
-// LẮNG NGHE TỪ FIREBASE VÀ ĐẨY VÀO MẢNG TRẠNG THÁI ĐỆM
+// LẮNG NGHE ĐỒNG BỘ TRẠNG THÁI MẢNG TỪ FIREBASE VỀ BỘ ĐỆM MÁY 1
 function listenToRemoteGamepad(roomId) {
-    db.ref("gamepads/" + roomId).on("value", (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return;
-        // Quét qua các thuộc tính của object để lưu vào mảng đệm cục bộ
-        Object.keys(data).forEach(buttonId => {
-            const idx = parseInt(buttonId);
-            if (!isNaN(idx)) {
-                remoteGamepadState[idx] = parseInt(data[buttonId]);
+    db.ref("gamepads/" + roomId + "/btnState").on("value", (snapshot) => {
+        const arrData = snapshot.val();
+        if (Array.isArray(arrData)) {
+            for (let i = 0; i < arrData.length; i++) {
+                remoteGamepadState[i] = parseInt(arrData[i]) || 0;
             }
-        });
+        }
     });
 }
 
-// VÒNG LẶP LIÊN TỤC THEO KHUNG HÌNH (TƯƠNG TỰ CÁCH BLUETOOTH GAMEPAD HOẠT ĐỘNG)
+// VÒNG LẶP ÉP PHÍM LIÊN TỤC THEO TICK-RATE KHUNG HÌNH (MÔ PHỎNG TAY CẦM BLUETOOTH THẬT)
 function updateRemoteInputLoop() {
     if (window.EJS_emulator && window.EJS_emulator.api) {
-        const playerIndex = 1; // Máy phụ (Player 2)
+        const playerIndex = 1; // Cổng P2
         for (let buttonId = 0; buttonId < 16; buttonId++) {
-            const value = remoteGamepadState[buttonId];
+            const val = remoteGamepadState[buttonId];
             try {
-                window.EJS_emulator.api.setGamepadState(playerIndex, buttonId, value);
+                // Nhồi trực tiếp vào Core API của EmulatorJS
+                window.EJS_emulator.api.setGamepadState(playerIndex, buttonId, val);
             } catch(e){}
         }
     }
@@ -394,7 +389,7 @@ function startGame(romUrl, romName = ""){
 
     window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
     window.EJS_corePath = "https://cdn.emulatorjs.org/stable/data/cores/";
-	window.EJS_language = "en";
+    window.EJS_language = "en";
     window.EJS_startOnLoaded = true;
 
     window.EJS_players = 2;
@@ -402,16 +397,16 @@ function startGame(romUrl, romName = ""){
     window.EJS_gamepad = true;
 
     window.EJS_onGameStart = function() {
-        console.log("✅ Lõi MAME đã khởi động.");
+        console.log("🔥 Lõi MAME đã sẵn sàng.");
         if (window.EJS_emulator && window.EJS_emulator.api) {
             try {
                 if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
-                    window.EJS_emulator.api.setControllerPortDevice(0, 1);
-                    window.EJS_emulator.api.setControllerPortDevice(1, 1);
+                    window.EJS_emulator.api.setControllerPortDevice(0, 1); 
+                    window.EJS_emulator.api.setControllerPortDevice(1, 1); 
                 }
             } catch (err){}
         }
-        // Kích hoạt vòng lặp nạp phím theo thời gian thực của khung hình game
+        // Khởi chạy vòng lặp nạp phím thời gian thực
         requestAnimationFrame(updateRemoteInputLoop);
     };
 

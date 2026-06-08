@@ -13,8 +13,8 @@ html, body {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #000000;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #1a1a1a;
+    font-family: Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -22,7 +22,7 @@ html, body {
 #gamepad-container {
     position: relative;
     width: 100%; height: 100%;
-    background: #151515;
+    background: radial-gradient(circle, #2c2c2c 0%, #111111 100%);
 }
 
 #close-btn {
@@ -31,7 +31,7 @@ html, body {
     width: 45px; height: 45px;
     background: #ff3366;
     color: white;
-    font-size: 22px; font-weight: bold;
+    font-size: 20px; font-weight: bold;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #fff;
@@ -43,96 +43,77 @@ html, body {
 #room-tag {
     position: absolute;
     top: 15px; right: 20px;
-    color: rgba(255,255,204,0.4);
-    font-size: 13px; font-weight: bold;
+    color: rgba(255,255,255,0.3);
+    font-size: 14px; font-weight: bold;
 }
 
-/* CỤM D-PAD CHUẨN ĐẸP */
+/* D-PAD CHUẨN */
 .dpad {
     position: absolute;
-    bottom: 35px; left: 45px;
-    width: 130px; height: 130px;
+    bottom: 30px; left: 40px;
+    width: 140px; height: 140px;
 }
 .dpad-btn {
     position: absolute;
-    background: #252525;
-    border: 1px solid #3c3c3c;
+    background: #333;
+    border: 2px solid #555;
+    border-radius: 8px;
 }
-.dpad-btn:active { background: #800000; border-color: #ff3333; }
+.dpad-btn:active { background: #ffcc00; }
 
-#btn-up { top: 0; left: 44px; width: 42px; height: 46px; border-radius: 6px 6px 0 0; }
-#btn-down { bottom: 0; left: 44px; width: 42px; height: 46px; border-radius: 0 0 6px 6px; }
-#btn-left { top: 44px; left: 0; width: 46px; height: 42px; border-radius: 6px 0 0 6px; }
-#btn-right { top: 44px; right: 0; width: 46px; height: 42px; border-radius: 0 6px 6px 0; }
-.dpad-center { position: absolute; top: 44px; left: 44px; width: 42px; height: 42px; background: #1a1a1a; }
+#btn-up { top: 0; left: 48px; width: 44px; height: 48px; border-bottom: none; border-radius: 8px 8px 0 0; }
+#btn-down { bottom: 0; left: 48px; width: 44px; height: 48px; border-top: none; border-radius: 0 0 8px 8px; }
+#btn-left { top: 48px; left: 0; width: 48px; height: 44px; border-right: none; border-radius: 8px 0 0 8px; }
+#btn-right { top: 48px; right: 0; width: 48px; height: 44px; border-left: none; border-radius: 0 8px 8px 0; }
+.dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #222; }
 
-/* CỤM NÚT BẤM ĐIỀU KHIỂN CHUẨN EMULATORJS (X Y A B) */
+/* MAP LẠI INDEX PHÍM THEO CHUẨN GỐC GITHUB EMULATORJS (A=4, B=5, X=6, Y=7) */
 .action-group {
     position: absolute;
-    bottom: 35px; right: 45px;
-    width: 140px; height: 140px;
+    bottom: 25px; right: 40px;
+    width: 150px; height: 150px;
 }
 .action-btn {
     position: absolute;
-    width: 44px; height: 44px;
-    background: rgba(255,255,255,0.1);
-    color: #e0e0e0;
+    width: 46px; height: 46px;
+    background: #444;
+    color: white;
     font-size: 18px; font-weight: bold;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid rgba(255,255,255,0.2);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+    border: 2px solid #666;
+    box-shadow: 0 4px 4px rgba(0,0,0,0.3);
 }
-.action-btn:active { background: #ffffff !important; color: #000000 !important; }
+#btn-Y { top: 0; left: 50px; background: #0099ff; }
+#btn-X { top: 50px; left: 0; background: #cc00cc; }
+#btn-B { top: 50px; right: 0; background: #ff3300; }
+#btn-A { bottom: 0; left: 50px; background: #00cc44; }
+.action-btn:active { background: #fff !important; color: #000; }
 
-#btn-Y { top: 0; left: 48px; }
-#btn-X { top: 48px; left: 0; }
-#btn-B { top: 48px; right: 0; }
-#btn-A { bottom: 0; left: 48px; }
-
-/* CỤM NÚT CHỨC NĂNG Ở GIỮA DƯỚI (SELECT / START) */
 .sys-group {
     position: absolute;
-    bottom: 50px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex; gap: 10px;
+    display: flex; gap: 15px;
 }
 .sys-btn {
-    background: #252525;
-    color: #b0b0b0;
-    border: 1px solid #3c3c3c;
-    padding: 6px 14px;
+    background: #555;
+    color: white;
+    border: 1px solid #777;
+    padding: 8px 15px;
     font-size: 11px; font-weight: bold;
-    border-radius: 4px;
+    border-radius: 15px;
+    text-transform: uppercase;
 }
 .sys-btn:active { background: #ffcc00; color: #000; }
-
-/* CỤM PHÍM PHỤ FAST / SLOW CHUẨN EMULATORJS Ở ĐÁY MÀN HÌNH */
-.speed-group {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 40px;
-}
-.speed-btn {
-    background: #202020;
-    color: #8a8a8a;
-    border: 1px solid #2d2d2d;
-    padding: 4px 18px;
-    font-size: 10px;
-    border-radius: 4px;
-}
-.speed-btn:active { background: #fff; color: #000; }
 </style>
 </head>
 <body>
 
 <div id="gamepad-container">
-    
     <div id="close-btn">✕</div>
-    <div id="room-tag">TAY CẦM PHỤ - PHÒNG: <span id="room-id-text">0000</span></div>
+    <div id="room-tag">MÁY PHỤ: PHÒNG <span id="room-id-text">0000</span></div>
 
     <div class="dpad">
         <div id="btn-up" class="dpad-btn" data-button="0"></div>
@@ -143,8 +124,8 @@ html, body {
     </div>
 
     <div class="sys-group">
-        <button class="sys-btn" id="btn-select" data-button="10">Select</button>
-        <button class="sys-btn" id="btn-start" data-button="11">Start</button>
+        <button class="sys-btn" id="btn-select" data-button="8">Select (Coin)</button>
+        <button class="sys-btn" id="btn-start" data-button="9">Start</button>
     </div>
 
     <div class="action-group">
@@ -153,12 +134,6 @@ html, body {
         <div id="btn-B" class="action-btn" data-button="5">B</div>
         <div id="btn-A" class="action-btn" data-button="4">A</div>
     </div>
-
-    <div class="speed-group">
-        <button class="speed-btn" id="btn-fast" data-button="12">Fast</button>
-        <button class="speed-btn" id="btn-slow" data-button="13">Slow</button>
-    </div>
-
 </div>
 
 <script>
@@ -175,36 +150,43 @@ document.getElementById("room-id-text").innerText = roomId;
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
-// HÀM UPDATE TRỰC TIẾP GIÁ TRỊ NÚT BẤM (0 HOẶC 1) VÀO NODE FIREBASE CỐ ĐỊNH
-function sendInputToFirebase(buttonId, value) {
-    const dataUpdate = {};
-    dataUpdate[buttonId] = value;
-    db.ref("gamepads/" + roomId).update(dataUpdate);
+// Tạo mảng 16 phần tử lưu trạng thái cục bộ tại Máy 2
+let localStateArr = new Array(16).fill(0);
+
+// GỬI FULL MẢNG TRẠNG THÁI (DÙNG UPDATE ĐỂ KHÔNG BỊ PHÍM NÀY ĐÈ MẤT PHÍM KIA)
+function sendStateToFirebase() {
+    db.ref("gamepads/" + roomId).update({
+        btnState: localStateArr
+    });
 }
 
-const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn, .speed-btn');
+const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn');
 
 allButtons.forEach(btn => {
-    const btnId = btn.getAttribute('data-button');
+    const btnId = parseInt(btn.getAttribute('data-button'));
     
-    // ĐIỆN THOẠI (TOUCH)
+    // TẬP HỢP SỰ KIỆN NHẤN XUỐNG
     btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        sendInputToFirebase(btnId, 1);
+        localStateArr[btnId] = 1;
+        sendStateToFirebase();
     });
-    btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        sendInputToFirebase(btnId, 0);
-    });
-
-    // MÁY TÍNH (MOUSE)
     btn.addEventListener('mousedown', (e) => {
         e.preventDefault();
-        sendInputToFirebase(btnId, 1);
+        localStateArr[btnId] = 1;
+        sendStateToFirebase();
+    });
+
+    // TẬP HỢP SỰ KIỆN NHẢ RA
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        localStateArr[btnId] = 0;
+        sendStateToFirebase();
     });
     btn.addEventListener('mouseup', (e) => {
         e.preventDefault();
-        sendInputToFirebase(btnId, 0);
+        localStateArr[btnId] = 0;
+        sendStateToFirebase();
     });
 });
 
@@ -228,9 +210,7 @@ function makeElementDraggable(element) {
         const touch = e.touches[0];
         const dx = touch.clientX - startX;
         const dy = touch.clientY - startY;
-
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) { hasMoved = true; }
-
         if (hasMoved) {
             let newLeft = startLeft + dx;
             let newTop = startTop + dy;
@@ -243,12 +223,9 @@ function makeElementDraggable(element) {
 
     element.addEventListener("touchend", () => {
         isDragging = false;
-        if (!hasMoved) {
-            window.location.href = "mame.html";
-        }
+        if (!hasMoved) { window.location.href = "mame.html"; }
     });
 }
-
 makeElementDraggable(document.getElementById("close-btn"));
 </script>
 </body>
