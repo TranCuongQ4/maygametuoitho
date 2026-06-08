@@ -25,8 +25,6 @@ const rtcConfig = {
 };
 
 // Mảng bảng phím mặc định của EmulatorJS dành cho Player 1 và Player 2 để chúng ta map tín hiệu mạng
-// Player 1 thông thường: Xuống=ArrowDown, Lên=ArrowUp, Trái=ArrowLeft, Phải=ArrowRight, Đấm=Z, Đá=X, Select=Shift, Start=Enter
-// Player 2 thông thường: Lên=KeyW, Xuống=KeyS, Trái=KeyA, Phải=KeyD, Đấm=KeyI, Đá=KeyO, Select=KeyC, Start=KeyV
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
@@ -138,7 +136,9 @@ async function joinOnlineRoom(roomId, gameUrl) {
         // Gửi thông tin định vị mạng ICE lên Firebase cho Host nhận diện
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                roomRef.child("guestCandidates").push(event.candidate.toJSON());
+                // SỬA LỖI: Chuyển đổi candidate an toàn không dùng toJSON() trực tiếp
+                const candidateObj = JSON.parse(JSON.stringify(event.candidate));
+                roomRef.child("guestCandidates").push(candidateObj);
             }
         };
 
@@ -150,7 +150,10 @@ async function joinOnlineRoom(roomId, gameUrl) {
         // Tạo mã trả lời mạng (Answer) gửi ngược lên lại Firebase
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        await roomRef.update({ answer: answer.toJSON(), status: "connected" });
+        
+        // SỬA LỖI: Chuyển đổi answer object an toàn để lưu lên Firebase
+        const answerObj = JSON.parse(JSON.stringify(answer));
+        await roomRef.update({ answer: answerObj, status: "connected" });
 
         // Lắng nghe mã định vị ICE của Host
         roomRef.child("hostCandidates").on("child_added", (snapshot) => {
@@ -167,20 +170,25 @@ async function setupWebRTC(roomRef) {
     peerConnection = new RTCPeerConnection(rtcConfig);
     
     // Chủ phòng chủ động mở luồng ống truyền dữ liệu Data Channel đặt tên là "gameControls"
-    dataChannel = peerConnection.createDataChannel("gameControls", { ordered: false }); // thiết lập không tuần tự để truyền nút bấm thời gian thực nhanh nhất
+    dataChannel = peerConnection.createDataChannel("gameControls", { ordered: false }); 
     setupDataChannelEvents();
 
     // Gửi thông tin định vị mạng ICE của Host lên Firebase
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            roomRef.child("hostCandidates").push(event.candidate.toJSON());
+            // SỬA LỖI: Chuyển đổi candidate sang object an toàn
+            const candidateObj = JSON.parse(JSON.stringify(event.candidate));
+            roomRef.child("hostCandidates").push(candidateObj);
         }
     };
 
     // Tạo mã Offer kết nối mạng ban đầu và đẩy lên Firebase
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
-    await roomRef.update({ offer: offer.toJSON() });
+    
+    // SỬA LỖI CHÍNH TẠI ĐÂY: Loại bỏ offer.toJSON(), dùng cấu trúc parse an toàn chạy được mọi trình duyệt
+    const offerObj = JSON.parse(JSON.stringify(offer));
+    await roomRef.update({ offer: offerObj });
 }
 
 // Cấu hình sự kiện mở đóng của đường truyền data channel
@@ -226,41 +234,33 @@ function handleKeyEvent(event, type) {
     const pressedKey = event.key;
 
     if (isHost) {
-        // TẠI MÁY HOST (CHỦ PHÒNG) - ĐIỀU KHIỂN PLAYER 1
-        // Nếu Host nhấn nhầm cụm phím của Player 2, chặn không cho tác động nội bộ máy
         if (P2_KEYS.includes(pressedKey.toLowerCase())) {
             event.preventDefault();
             event.stopPropagation();
             return;
         }
         
-        // Nếu Host bấm các phím Player 1, cho phép chạy và gửi mã nút sang máy Guest
         if (P1_KEYS.includes(pressedKey)) {
             dataChannel.send(JSON.stringify({
                 type: type,
                 key: pressedKey,
-                player: 1 // Báo cho Guest biết đây là phím của Player 1
+                player: 1
             }));
         }
     } else {
-        // TẠI MÁY GUEST (KHÁCH) - ĐIỀU KHIỂN PLAYER 2
-        // Khi Guest bấm cụm phím Player 1 thông thường trên máy họ, ta biến nó thành phím của Player 2
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
-            // Chặn đứng hành vi điều khiển Player 1 nội bộ trên màn hình máy khách
             event.preventDefault();
             event.stopPropagation();
             
-            // Lấy phím tương ứng ở bảng Player 2 để gửi đi
             let mappedP2Key = P2_KEYS[keyIndex];
             
             dataChannel.send(JSON.stringify({
                 type: type,
                 key: mappedP2Key,
-                player: 2 // Báo cho Host biết đây là phím của Player 2
+                player: 2
             }));
             
-            // Tự kích hoạt phím Player 2 đó ngay trên màn hình Emulator máy mình để điều khiển nhân vật 2
             simulateEmulatorKeyEvent(type, mappedP2Key, 2);
         }
     }
@@ -268,14 +268,12 @@ function handleKeyEvent(event, type) {
 
 // Hàm giả lập tiêm phím cơ học trực tiếp vào đối tượng xử lý EmulatorJS của trình duyệt
 function simulateEmulatorKeyEvent(type, keyName, targetPlayer) {
-    // Tạo ra sự kiện giả lập bàn phím chuẩn cấu trúc trình duyệt
     const e = new KeyboardEvent(type, {
         key: keyName,
         bubbles: true,
         cancelable: true
     });
     
-    // Bơm sự kiện này vào thẳng phần tử chứa Emulator
     const emulatorEl = document.querySelector(window.EJS_player || "#emulator");
     if (emulatorEl) {
         emulatorEl.dispatchEvent(e);
