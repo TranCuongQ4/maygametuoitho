@@ -5,7 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Tay Cầm PRO Trần Cường</title>
 <style>
-* { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
+* { 
+    box-sizing: border-box; 
+    user-select: none; 
+    -webkit-user-select: none; 
+    touch-action: none; /* Khóa toàn bộ cử chỉ cuộn/phóng to mặc định của trình duyệt */
+}
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #14171c; font-family: 'Segoe UI', Arial, sans-serif; }
 body { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 16px; position: relative; }
 
@@ -29,6 +34,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     justify-content: center; 
     box-shadow: 0 5px 0px #161a20, 0 6px 10px rgba(0,0,0,0.6);
     transition: all 0.05s ease;
+    touch-action: manipulation; /* Tối ưu hóa phản hồi chạm siêu tốc */
 }
 .shoulder-btn:active, .shoulder-btn.active { 
     transform: translateY(4px);
@@ -77,6 +83,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     text-align: center; 
     box-shadow: 0 4px 0px #111, 0 4px 6px rgba(0,0,0,0.4); 
     width: 105px; 
+    touch-action: manipulation;
 }
 .sys-btn:active, .sys-btn.active { 
     transform: translateY(3px);
@@ -93,13 +100,14 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     padding: 10px 12px; 
     border-radius: 8px; 
     box-shadow: 0 4px 0px #991b1b, 0 4px 8px rgba(0,0,0,0.4);
+    touch-action: manipulation;
 }
 .btn-scan:active {
     transform: translateY(3px);
     box-shadow: 0 1px 0px #991b1b, 0 1px 3px rgba(0,0,0,0.4);
 }
 
-/* CỤM NÚT NHẤN ĐÃ ĐƯỢC ĐỔI LẠI VỊ TRÍ CHUẨN THEO SƠ ĐỒ HÌNH ẢNH */
+/* CỤM NÚT NHẤN SNES DIAMOND CHUẨN SƠ ĐỒ HÌNH ẢNH */
 .snes-diamond { position: relative; width: 170px; height: 170px; }
 .action-btn { 
     position: absolute; 
@@ -112,6 +120,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     align-items: center; 
     justify-content: center; 
     transition: all 0.05s ease;
+    touch-action: manipulation; /* Tăng tốc phản hồi chạm tức thì */
 }
 
 /* Nút Y nằm ở TRÊN CÙNG (Màu Tím) */
@@ -256,6 +265,7 @@ function ketNoiMayChuPeerJS(roomId) {
     peer = new Peer({ config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
 
     peer.on('open', function() {
+        // Cấu hình reliable: false và ordered: false để truyền dữ liệu thời gian thực không trễ (tốc độ cao như UDP)
         conn = peer.connect(`trancuong_mame_${roomId}`, { reliable: false, ordered: false });
         conn.on('open', function() {
             statusBar.classList.add("connected");
@@ -306,12 +316,13 @@ function handleTouch(e) {
     });
 }
 
+// Bắt sự kiện siêu nhạy bằng cách áp dụng passive: false kết hợp loại bỏ delay touch trên thiết bị di động
 window.addEventListener('touchstart', handleTouch, { passive: false });
 window.addEventListener('touchmove', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
 window.addEventListener('touchcancel', handleTouch, { passive: false });
 
-// LOGIC XOAY ANALOG
+// LOGIC XOAY ANALOG JOYSTICK
 const joyContainer = document.getElementById('joy-container');
 const joyKnob = document.getElementById('joy-knob');
 let joystickActive = false;
@@ -444,7 +455,6 @@ function moveJoystick(touch) {
             let newLeft = startLeft + dx;
             let newTop = startTop + dy;
 
-            // Đảm bảo nút nằm trong khung màn hình
             newLeft = Math.max(5, Math.min(window.innerWidth - closeBtn.offsetWidth - 5, newLeft));
             newTop = Math.max(5, Math.min(window.innerHeight - closeBtn.offsetHeight - 5, newTop));
 
@@ -459,11 +469,9 @@ function moveJoystick(touch) {
             if (e.changedTouches[i].identifier === btnTouchId) {
                 isDragging = false;
                 btnTouchId = null;
-                // Trả lại trạng thái đổ bóng 3D lồi
                 closeBtn.style.transform = "none";
                 closeBtn.style.boxShadow = "0 5px 0px #990000, 0 6px 10px rgba(0,0,0,0.5)";
                 
-                // Nếu chỉ chạm nhấn mà không kéo, thực hiện quay về trang mame.html
                 if (!hasMoved) {
                     window.location.href = "mame.html";
                 }
