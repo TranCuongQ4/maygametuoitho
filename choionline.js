@@ -31,6 +31,25 @@ const rtcConfig = {
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
+// --- TÍNH NĂNG MỚI: THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI ---
+db.ref(".info/connected").on("value", (snapshot) => {
+    if (snapshot.val() === false) {
+        console.log("⚠️ Phát hiện mất kết nối mạng hoặc Firebase đang tải lại...");
+        const statusEl = document.getElementById("connection-status");
+        if (statusEl && isOnlineMode) {
+            statusEl.textContent = "⚠️ Mạng chập chờn, đang tự động kết nối lại...";
+            statusEl.style.color = "#ff3366";
+        }
+    } else {
+        console.log("✅ Kết nối Firebase hoạt động ổn định.");
+        const statusEl = document.getElementById("connection-status");
+        if (statusEl && isOnlineMode && isHost && currentRoomId) {
+            statusEl.textContent = "⌛ Đang đợi bạn vào phòng...";
+            statusEl.style.color = "#ffcc00";
+        }
+    }
+});
+
 // --- KIỂM TRA ĐƯỜNG DẪN URL XEM CÓ PHẢI LÀ KHÁCH CLICK VÀO LINK KHÔNG ---
 window.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -58,6 +77,11 @@ function createOnlineRoom() {
     myRole = "host";
     pendingCandidates = []; // Reset hàng đợi candidates
     
+    // Nếu có kết nối Peer cũ đang chạy ngầm, đóng nó lại để giải phóng tài nguyên
+    if (peerConnection) {
+        try { peerConnection.close(); } catch(e){}
+    }
+    
     // Tạo ID phòng ngẫu nhiên gồm 6 chữ số
     currentRoomId = Math.floor(100000 + Math.random() * 900000);
     
@@ -80,18 +104,22 @@ function createOnlineRoom() {
     roomRef.child("answer").on("value", async (snapshot) => {
         const answer = snapshot.val();
         if (answer && peerConnection && peerConnection.signalingState === "have-local-offer") {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-            document.getElementById("connection-status").textContent = "🟢 Đã kết nối thành công! Trận đấu bắt đầu...";
-            document.getElementById("connection-status").style.color = "#00ffcc";
-            
-            // Xử lý toàn bộ các candidate bị dồn ứ trong hàng đợi sau khi setRemoteDescription thành công
-            processPendingCandidates();
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                document.getElementById("connection-status").textContent = "🟢 Đã kết nối thành công! Trận đấu bắt đầu...";
+                document.getElementById("connection-status").style.color = "#00ffcc";
+                
+                // Xử lý toàn bộ các candidate bị dồn ứ trong hàng đợi sau khi setRemoteDescription thành công
+                processPendingCandidates();
 
-            // Đợi 1 giây cho đường ống mạng ổn định rồi kích hoạt màn hình game
-            setTimeout(() => {
-                closeOnlineModal();
-                startGame(currentSelectedRomUrl, currentSelectedRomName);
-            }, 1000);
+                // Đợi 1 giây cho đường ống mạng ổn định rồi kích hoạt màn hình game
+                setTimeout(() => {
+                    closeOnlineModal();
+                    startGame(currentSelectedRomUrl, currentSelectedRomName);
+                }, 1000);
+            } catch(err) {
+                console.log("Lỗi đồng bộ cấu hình bắt tay mạng:", err);
+            }
         }
     });
 
@@ -99,11 +127,10 @@ function createOnlineRoom() {
     roomRef.child("guestCandidates").on("child_added", (snapshot) => {
         const candidate = snapshot.val();
         if (candidate && peerConnection) {
-            // SỬA LỖI CHÍNH TẠI ĐÂY: Nếu chưa cấu hình remote description thì nạp vào hàng đợi chờ xử lý sau
             if (!peerConnection.remoteDescription) {
                 pendingCandidates.push(candidate);
             } else {
-                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi addIceCandidate:", e));
+                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi nạp định vị mạng:", e));
             }
         }
     });
@@ -136,11 +163,15 @@ async function joinOnlineRoom(roomId, gameUrl) {
     const roomRef = db.ref("rooms/" + roomId);
     pendingCandidates = []; // Reset hàng đợi candidates
     
+    if (peerConnection) {
+        try { peerConnection.close(); } catch(e){}
+    }
+    
     // Đọc thông tin phòng từ Firebase để lấy chuẩn file ROM đồng bộ với chủ phòng
     roomRef.once("value", async (snapshot) => {
         const roomData = snapshot.val();
         if (!roomData) {
-            alert("Phòng chơi không tồn tại hoặc đã bị hủy!");
+            alert("Phòng chơi không tồn tại hoặc đã bị hủy do lỗi mạng!");
             window.location.href = window.location.pathname;
             return;
         }
@@ -167,27 +198,35 @@ async function joinOnlineRoom(roomId, gameUrl) {
         // Lấy mã Offer kết nối của chủ phòng từ Firebase xuống
         const offerSnapshot = await roomRef.child("offer").once("value");
         const offer = offerSnapshot.val();
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-
-        // Tạo mã trả lời mạng (Answer) gửi ngược lên lại Firebase
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+        if (!offer) {
+            document.getElementById("join-status").textContent = "❌ Lỗi mạng: Chủ phòng chưa khởi tạo mã bắt tay!";
+            return;
+        }
         
-        const answerObj = JSON.parse(JSON.stringify(answer));
-        await roomRef.update({ answer: answerObj, status: "connected" });
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
 
-        // Sau khi đã setRemoteDescription xong, xử lý giải phóng các candidate nếu có
-        processPendingCandidates();
+            // Tạo mã trả lời mạng (Answer) gửi ngược lên lại Firebase
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            
+            const answerObj = JSON.parse(JSON.stringify(answer));
+            await roomRef.update({ answer: answerObj, status: "connected" });
+
+            // Sau khi đã setRemoteDescription xong, xử lý giải phóng các candidate nếu có
+            processPendingCandidates();
+        } catch(err) {
+            console.log("Lỗi thiết lập liên kết khách:", err);
+        }
 
         // Lắng nghe mã định vị ICE của Host
         roomRef.child("hostCandidates").on("child_added", (snapshot) => {
             const candidate = snapshot.val();
             if (candidate && peerConnection) {
-                // SỬA LỖI CHÍNH TẠI ĐÂY: Tránh nạp đè lúc remote description chưa sẵn sàng
                 if (!peerConnection.remoteDescription) {
                     pendingCandidates.push(candidate);
                 } else {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi addIceCandidate:", e));
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi nạp định vị mạng:", e));
                 }
             }
         });
@@ -210,12 +249,16 @@ async function setupWebRTC(roomRef) {
         }
     };
 
-    // Tạo mã Offer kết nối mạng ban đầu và đẩy lên Firebase
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    
-    const offerObj = JSON.parse(JSON.stringify(offer));
-    await roomRef.update({ offer: offerObj });
+    try {
+        // Tạo mã Offer kết nối mạng ban đầu và đẩy lên Firebase
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        const offerObj = JSON.parse(JSON.stringify(offer));
+        await roomRef.update({ offer: offerObj });
+    } catch(err) {
+        console.log("Lỗi tạo mã khởi tạo mạng:", err);
+    }
 }
 
 // Cấu hình sự kiện mở đóng của đường truyền data channel
@@ -224,85 +267,3 @@ function setupDataChannelEvents() {
         console.log("Đường truyền WebRTC Đã Mở!");
         if (!isHost) {
             document.getElementById("join-status").textContent = "🟢 Đang vào game cùng chủ phòng...";
-            setTimeout(() => {
-                closeOnlineModal();
-                startGame(currentSelectedRomUrl, currentSelectedRomName);
-            }, 1000);
-        }
-    };
-    
-    dataChannel.onclose = () => {
-        console.log("Mất kết nối mạng!");
-        alert("Bạn chơi đã thoát phòng hoặc mất kết nối mạng!");
-        forceCloseGame();
-    };
-
-    // NHẬN TÍN HIỆU PHÍM BẤM TỪ MÁY ĐỐI THỦ GỬI SANG
-    dataChannel.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "keyup" || msg.type === "keydown") {
-            simulateEmulatorKeyEvent(msg.type, msg.key, msg.player);
-        }
-    };
-}
-
-// --- CHỨC NĂNG 4: BỘ ĐIỀU PHỐI ĐÁNH CHẶN VÀ ĐỒNG BỘ PHÍM BÀN PHÍM ---
-function setupOnlineKeySync() {
-    if (!isOnlineMode) return;
-
-    // Đánh chặn sự kiện gõ phím hệ thống
-    window.addEventListener("keydown", (e) => handleKeyEvent(e, "keydown"), true);
-    window.addEventListener("keyup", (e) => handleKeyEvent(e, "keyup"), true);
-}
-
-function handleKeyEvent(event, type) {
-    if (!isOnlineMode || !dataChannel || dataChannel.readyState !== "open") return;
-
-    const pressedKey = event.key;
-
-    if (isHost) {
-        if (P2_KEYS.includes(pressedKey.toLowerCase())) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-        }
-        
-        if (P1_KEYS.includes(pressedKey)) {
-            dataChannel.send(JSON.stringify({
-                type: type,
-                key: pressedKey,
-                player: 1
-            }));
-        }
-    } else {
-        let keyIndex = P1_KEYS.indexOf(pressedKey);
-        if (keyIndex !== -1) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            let mappedP2Key = P2_KEYS[keyIndex];
-            
-            dataChannel.send(JSON.stringify({
-                type: type,
-                key: mappedP2Key,
-                player: 2
-            }));
-            
-            simulateEmulatorKeyEvent(type, mappedP2Key, 2);
-        }
-    }
-}
-
-// Hàm giả lập tiêm phím cơ học trực tiếp vào đối tượng xử lý EmulatorJS của trình duyệt
-function simulateEmulatorKeyEvent(type, keyName, targetPlayer) {
-    const e = new KeyboardEvent(type, {
-        key: keyName,
-        bubbles: true,
-        cancelable: true
-    });
-    
-    const emulatorEl = document.querySelector(window.EJS_player || "#emulator");
-    if (emulatorEl) {
-        emulatorEl.dispatchEvent(e);
-    }
-}
