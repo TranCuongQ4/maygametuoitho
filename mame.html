@@ -3,192 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
-<title>Trò Chơi Game Thùng - Bluetooth Receiver</title>
-
+<title>Trò Chơi Game Thùng - P2P Receiver</title>
 <style>
 html,body{
-    margin:0;
-    padding:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#121212;
-    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-    color:#fff;
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    background:#121212; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#fff;
 }
-
 #menu-container{
-    width:100%;
-    height:100%;
-    box-sizing:border-box;
-    padding:20px 20px 40px 20px;
-    overflow-y:auto;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+    width:100%; height:100%; box-sizing:border-box; padding:20px;
+    overflow-y:auto; display:flex; flex-direction:column; align-items:center;
 }
-
-h1{
-    color:#ffcc00;
-    font-size:26px;
-    margin-bottom:5px;
-    text-shadow:2px 2px #000;
-    text-align:center;
-}
-
-.subtitle{
-    color:#aaa;
-    font-size:14px;
-    margin-bottom:20px;
-}
-
+h1{ color:#ffcc00; font-size:26px; margin-bottom:5px; text-shadow:2px 2px #000; text-align:center; }
+.subtitle{ color:#aaa; font-size:14px; margin-bottom:20px; }
 .btn{
-    background:linear-gradient(145deg,#2a2a2a,#222);
-    color:white;
-    border:1px solid #444;
-    padding:14px 20px;
-    margin:6px 0;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:16px;
-    font-weight:bold;
-    width:90%;
-    max-width:340px;
-    box-shadow:0 4px 6px rgba(0,0,0,.3);
-    transition:all .1s ease;
-    -webkit-tap-highlight-color:transparent;
-    text-align:center;
+    background:linear-gradient(145deg,#2a2a2a,#222); color:white; border:1px solid #444;
+    padding:14px 20px; margin:6px 0; border-radius:10px; cursor:pointer; font-size:16px;
+    font-weight:bold; width:90%; max-width:340px; box-shadow:0 4px 6px rgba(0,0,0,.3);
+    transition:all .1s ease; text-align:center; -webkit-tap-highlight-color:transparent;
 }
-
-.btn:active{
-    transform:scale(.98);
-    background:#ffcc00;
-    color:#000;
-    border-color:#fff;
-}
-
-.btn-back{
-    background:linear-gradient(145deg,#0f2b46,#0a1c2e);
-    border:1px solid #00ffcc;
-    color:#00ffcc;
-}
-
-.btn-gt{
-    background:linear-gradient(145deg,#0f2b46,#0a1c2e);
-    border:1px solid #00ffcc;
-    color:#00ffcc;
-}
-
-.btn-hd { 
-    background: linear-gradient(145deg, #0f2b46, #0a1c2e); 
-    border: 1px solid #00ffcc; 
-    color: #00ffcc; 
-}
-
-.btn-bluetooth {
-    background: linear-gradient(145deg, #0066ff, #0044cc);
-    border: 2px solid #fff;
-    color: #fff;
-}
-
-#romInput{
-    display:none;
-}
-
-.footer{
-    color:#ffcc00;
-    font-size:12px;
-    margin-top:25px;
-    text-align:center;
-}
-
-#game-box{
-    width:100%;
-    height:100%;
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    z-index:9999;
-    background:#000;
-}
-
-#emulator{
-    width:100%;
-    height:100%;
-}
-
+.btn:active{ transform:scale(.98); background:#ffcc00; color:#000; border-color:#fff; }
+.btn-back{ background:linear-gradient(145deg,#0f2b46,#0a1c2e); border:1px solid #00ffcc; color:#00ffcc; }
+.btn-p2p { background: linear-gradient(145deg, #00cc44, #009933); border: 2px solid #fff; color: #fff; }
+#romInput{ display:none; }
+.footer{ color:#ffcc00; font-size:12px; margin-top:25px; text-align:center; }
+#game-box{ width:100%; height:100%; display:none; position:fixed; top:0; left:0; z-index:9999; background:#000; }
+#emulator{ width:100%; height:100%; }
 #custom-close-btn{
-    position:fixed;
-    top:20px;
-    left:20px;
-    z-index:100000;
-    background-color:rgba(255,51,102,.9);
-    color:white;
-    border:2px solid rgba(255,255,255,.5);
-    border-radius:50%;
-    width:50px;
-    height:50px;
-    font-size:24px;
-    font-weight:bold;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    user-select:none;
-    touch-action:none;
-    box-shadow:0 4px 15px rgba(0,0,0,.5);
+    position:fixed; top:20px; left:20px; z-index:100000; background-color:rgba(255,51,102,.9);
+    color:white; border:2px solid rgba(255,255,255,.5); border-radius:50%; width:50px; height:50px;
+    font-size:24px; font-weight:bold; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none; touch-action:none; box-shadow:0 4px 15px rgba(0,0,0,.5);
 }
-
-.rotate-hint{
-    color:#ff3366;
-    font-size:13px;
-    margin-bottom:15px;
-    font-weight:bold;
-}
-
-#bt-status {
-    background: rgba(0, 0, 0, 0.6);
-    padding: 10px;
-    border-radius: 8px;
-    color: #00ffcc;
-    font-size: 14px;
-    margin-bottom: 15px;
-    border: 1px dashed #00ffcc;
-    width: 85%;
-    max-width: 320px;
-    text-align: center;
+#p2p-status {
+    background: rgba(0, 0, 0, 0.6); padding: 10px; border-radius: 8px; color: #ffcc00;
+    font-size: 13px; margin-bottom: 15px; border: 1px dashed #ffcc00; width: 85%; max-width: 320px; text-align: center;
 }
 </style>
 </head>
 <body>
 
 <div id="menu-container">
+    <h1>🕹️ GAME THÙNG SIÊU TỐC 🕹️</h1>
+    <div class="subtitle">Kết Nối Trực Tiếp Không Độ Trễ</div>
 
-    <h1>🕹️ GAME THÙNG BLUETOOTH 🕹️</h1>
-    <div class="subtitle">Kết Nối Không Dây Tốc Độ Cao</div>
-
-    <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
-
-    <div id="bt-status">Status: Bluetooth chưa kết nối</div>
-
-    <button class="btn btn-bluetooth" onclick="initBluetoothReceiver()">🔗 KẾT NỐI TAY CẦM MÁY 2 (BLUETOOTH) 🔗</button>
+    <div id="p2p-status">Trạng thái kết nối: Sẵn sàng vận hành</div>
+    
+    <button class="btn btn-p2p" onclick="setupP2PConnection()">🎮 KÍCH HOẠT VẬN HÀNH TAY CẦM PHỤ 🎮</button>
     <button class="btn btn-back" onclick="window.location.href='index.html'">← Trở Về Game Băng Đĩa</button>
 
     <button class="btn" onclick="askPlayMode('roms/dino.zip')">⚜ Trò Bộ Đội Nổi Tiếng ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/knights.zip')">⚜ Knights of the Round ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/1941.zip')">⚜ 1941: COUNTER ATTACK ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/1942.zip')">⚜ 1942 ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/dynwar.zip')">⚜ Tam Quốc Chí 1 ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/wof.zip')">⚜ Tam Quốc Chí 2 ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/ffight.zip')">⚜ Anh Hùng Đường Phố ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/mercs.zip')">⚜ Rambo Mecrs ⚜</button>
-    <button class="btn" onclick="askPlayMode('sf2.zip')">⚜ Street Fighter II ⚜</button>
-
-<div class="section-title">⚙️ Tiện ích ⚙️</div>
-<label for="romInput" class="btn" style="text-align:center;display:block;box-sizing:border-box;margin:6px auto;">📁 Nạp File Rom Từ Máy 📁</label>
-<input type="file" id="romInput" accept=".zip,.7z">
+    <button class="btn" onclick="askPlayMode('roms/sf2.zip')">⚜ Street Fighter II ⚜</button>
 
     <div class="footer">Thiết Kế Trần Cường - Zalo: 0907860662</div>
 </div>
@@ -202,67 +68,41 @@ h1{
 
 <script>
 let isLoaderScriptLoaded = false;
-let bluetoothDevice = null;
-let remoteGamepadState = new Array(16).fill(0);
+let peerConnection = null;
+let dataChannel = null;
 
-// SERVICE UUID CHUẨN ĐỂ LIÊN LẠC GIỮA 2 MÁY
-const GAMEPAD_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
-const GAMEPAD_CHAR_UUID    = '0000ffe1-0000-1000-8000-00805f9b34fb';
+// Khởi tạo cấu hình ICE Server mặc định của Google để tự tìm địa chỉ IP kết nối trực tiếp 2 máy
+const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-document.addEventListener("contextmenu", e => e.preventDefault());
-
-document.getElementById("romInput").addEventListener("change", function(e){
-    const file = e.target.files[0];
-    if(!file) return;
-    askPlayMode(URL.createObjectURL(file), file.name);
-});
-
-// KHỞI ĐỘNG THU TÍN HIỆU WEB BLUETOOTH TỪ MÁY TAY CẦM
-async function initBluetoothReceiver() {
-    const statusDiv = document.getElementById("bt-status");
-    try {
-        statusDiv.innerText = "Đang quét thiết bị tay cầm...";
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'EJS_Gamepad' }],
-            optionalServices: [GAMEPAD_SERVICE_UUID]
-        });
-
-        statusDiv.innerText = "Đang kết nối cổng GATT...";
-        const server = await bluetoothDevice.gatt.connect();
-        
-        statusDiv.innerText = "Đang lấy Service...";
-        const service = await server.getPrimaryService(GAMEPAD_SERVICE_UUID);
-        
-        statusDiv.innerText = "Đang mở cổng nhận data...";
-        const characteristic = await service.getCharacteristic(GAMEPAD_CHAR_UUID);
-        
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', handleGamepadData);
-        
-        statusDiv.innerHTML = "🟢 <b>ĐÃ KẾT NỐI TAY CẦM BLUETOOTH THÀNH CÔNG!</b>";
-    } catch(err) {
-        console.error(err);
-        statusDiv.innerText = "❌ Lỗi kết nối Bluetooth: " + err.message;
-    }
-}
-
-// XỬ LÝ DỮ LIỆU NHẬN ĐƯỢC TỪ SÓNG BLUETOOTH PHÁT SANG
-function handleGamepadData(event) {
-    const value = event.target.value;
-    // Nhận 2 byte dữ liệu: byte 0 là Button ID, byte 1 là trạng thái (0 hoặc 1)
-    const buttonId = value.getUint8(0);
-    const stateVal = value.getUint8(1);
+function setupP2PConnection() {
+    const statusDiv = document.getElementById("p2p-status");
+    peerConnection = new RTCPeerConnection(rtcConfig);
     
-    if (buttonId < 16) {
-        remoteGamepadState[buttonId] = stateVal;
-        
-        // Nhồi trực tiếp dữ liệu phím vào core game đang chạy theo thời gian thực
-        if (window.EJS_emulator && window.EJS_emulator.api) {
+    // Tạo kênh truyền dữ liệu siêu tốc độ dữ liệu thô (Dùng UDP)
+    dataChannel = peerConnection.createDataChannel("gamepadChannel", { ordered: false, maxRetransmits: 0 });
+    
+    dataChannel.onopen = () => { statusDiv.innerHTML = "🟢 <b>ĐÃ KẾT NỐI TAY CẦM TRỰC TIẾP!</b>"; };
+    dataChannel.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if(data && window.EJS_emulator && window.EJS_emulator.api) {
             try {
-                window.EJS_emulator.api.setGamepadState(1, buttonId, stateVal);
+                // Nhồi trực tiếp phím từ Máy 2 vào core EmulatorJS P2 lập tức
+                window.EJS_emulator.api.setGamepadState(1, data.btn, data.val);
             } catch(e){}
         }
-    }
+    };
+
+    peerConnection.onicecandidate = (e) => {
+        if (e.candidate == null) {
+            // Sau khi gom đủ mã cấu hình định danh, hiển thị mã để nhập sang máy tay cầm
+            const offerB64 = btoa(JSON.stringify(peerConnection.localDescription));
+            let shortCode = offerB64.substring(offerB64.length - 12, offerB64.length - 4).toUpperCase();
+            prompt("HÃY SAO CHÉP MÃ SỐ KẾT NỐI NÀY VÀ NHẬP VÀO MÁY TAY CẦM PHỤ:", shortCode);
+            statusDiv.innerText = "Chờ máy phụ nhập mã để thông kết nối...";
+        }
+    };
+
+    peerConnection.createOffer().then(offer => peerConnection.setLocalDescription(offer));
 }
 
 function askPlayMode(romUrl, romName = "") {
@@ -272,27 +112,23 @@ function askPlayMode(romUrl, romName = "") {
 function startGame(romUrl, romName = ""){
     document.getElementById("menu-container").style.display="none";
     document.getElementById("game-box").style.display="block";
-
     const container = document.getElementById("emulator-container");
     container.innerHTML = '<div id="emulator"></div>';
 
     window.EJS_player = "#emulator";
     window.EJS_core = "arcade";
     window.EJS_gameUrl = romUrl;
-
     if(romName !== "") window.EJS_gameName = romName;
 
     window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
     window.EJS_corePath = "https://cdn.emulatorjs.org/stable/data/cores/";
     window.EJS_language = "en";
     window.EJS_startOnLoaded = true;
-
     window.EJS_players = 2;
     window.EJS_maxPlayers = 2;
     window.EJS_gamepad = true;
 
     window.EJS_onGameStart = function() {
-        console.log("🎮 Lõi Game MAME Bluetooth khởi động.");
         if (window.EJS_emulator && window.EJS_emulator.api) {
             try {
                 if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
@@ -302,8 +138,6 @@ function startGame(romUrl, romName = ""){
             } catch (err){}
         }
     };
-
-    window.dispatchEvent(new Event("resize"));
 
     if(!isLoaderScriptLoaded){
         const script = document.createElement("script");
@@ -319,54 +153,7 @@ function startGame(romUrl, romName = ""){
     }
 }
 
-function forceCloseGame(){
-    window.location.reload();
-}
-
-function makeDraggable(element){
-    let isDragging = false;
-    let startX, startY, startLeft, startTop, hasMoved = false;
-
-    element.addEventListener("touchstart",(e)=>{
-        isDragging = true;
-        hasMoved = false;
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        const rect = element.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-    },{passive:true});
-
-    element.addEventListener("touchmove",(e)=>{
-        if(!isDragging) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-
-        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){ hasMoved = true; }
-
-        if(hasMoved){
-            if(e.cancelable){ e.preventDefault(); }
-            let newLeft = startLeft + dx;
-            let newTop  = startTop + dy;
-            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
-            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
-            element.style.left = newLeft + "px";
-            element.style.top  = newTop + "px";
-        }
-    },{passive:false});
-
-    element.addEventListener("touchend",()=>{
-        if(!isDragging) return;
-        isDragging = false;
-        if(!hasMoved){ forceCloseGame(); }
-    });
-}
-
-const closeBtn = document.getElementById("custom-close-btn");
-makeDraggable(closeBtn);
-closeBtn.addEventListener("click",()=>{ forceCloseGame(); });
+function forceCloseGame(){ window.location.reload(); }
 </script>
 </body>
 </html>

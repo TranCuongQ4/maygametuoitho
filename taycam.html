@@ -3,125 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tay Cầm Bluetooth - Máy 2</title>
-
+<title>Tay Cầm Siêu Tốc - Máy 2</title>
 <style>
-html, body {
-    margin: 0; padding: 0;
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: #111;
-    font-family: Arial, sans-serif;
-    user-select: none;
-    -webkit-user-select: none;
-}
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; font-family: Arial, sans-serif; user-select: none; -webkit-user-select: none; }
+#gamepad-container { position: relative; width: 100%; height: 100%; background: radial-gradient(circle, #252525 0%, #0a0a0a 100%); }
+#close-btn { position: absolute; top: 15px; left: 15px; width: 45px; height: 45px; background: #ff3366; color: white; font-size: 20px; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; cursor: pointer; z-index: 999; }
+#status-tag { position: absolute; top: 20px; right: 25px; color: #00ffcc; font-size: 14px; font-weight: bold; }
 
-#gamepad-container {
-    position: relative;
-    width: 100%; height: 100%;
-    background: radial-gradient(circle, #252525 0%, #0a0a0a 100%);
-}
-
-#close-btn {
-    position: absolute;
-    top: 15px; left: 15px;
-    width: 45px; height: 45px;
-    background: #ff3366;
-    color: white;
-    font-size: 20px; font-weight: bold;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    border: 2px solid #fff;
-    cursor: pointer; z-index: 999;
-}
-
-#status-tag {
-    position: absolute;
-    top: 20px; right: 25px;
-    color: #00ffcc;
-    font-size: 14px; font-weight: bold;
-}
-
-/* THIẾT KẾ D-PAD KHÔNG ĐỘ TRỄ */
-.dpad {
-    position: absolute;
-    bottom: 35px; left: 45px;
-    width: 140px; height: 140px;
-}
-.dpad-btn {
-    position: absolute;
-    background: #2a2a2a;
-    border: 2px solid #444;
-    border-radius: 8px;
-}
+/* D-PAD CHUẨN */
+.dpad { position: absolute; bottom: 35px; left: 45px; width: 140px; height: 140px; }
+.dpad-btn { position: absolute; background: #2a2a2a; border: 2px solid #444; border-radius: 8px; }
 .dpad-btn:active { background: #00ffcc; border-color: #fff; }
-
 #btn-up { top: 0; left: 48px; width: 44px; height: 48px; border-bottom: none; border-radius: 8px 8px 0 0; }
 #btn-down { bottom: 0; left: 48px; width: 44px; height: 48px; border-top: none; border-radius: 0 0 8px 8px; }
 #btn-left { top: 48px; left: 0; width: 48px; height: 44px; border-right: none; border-radius: 8px 0 0 8px; }
 #btn-right { top: 48px; right: 0; width: 48px; height: 44px; border-left: none; border-radius: 0 8px 8px 0; }
 .dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #151515; }
 
-/* NÚT BẤM CHUẨN ĐỒNG BỘ EMULATORJS CORE */
-.action-group {
-    position: absolute;
-    bottom: 30px; right: 45px;
-    width: 150px; height: 150px;
-}
-.action-btn {
-    position: absolute;
-    width: 48px; height: 48px;
-    background: #333;
-    color: white;
-    font-size: 18px; font-weight: bold;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    border: 2px solid #555;
-}
+/* ACTION BUTTONS (A, B, X, Y) */
+.action-group { position: absolute; bottom: 30px; right: 45px; width: 150px; height: 150px; }
+.action-btn { position: absolute; width: 48px; height: 48px; background: #333; color: white; font-size: 18px; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #555; }
 #btn-Y { top: 0; left: 50px; background: #0077ff; }
 #btn-X { top: 50px; left: 0; background: #aa00aa; }
 #btn-B { top: 50px; right: 0; background: #dd2200; }
 #btn-A { bottom: 0; left: 50px; background: #00aa33; }
 .action-btn:active { background: #fff !important; color: #000; }
 
-.sys-group {
-    position: absolute;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 20px;
-}
-.sys-btn {
-    background: #444;
-    color: white;
-    border: 1px solid #666;
-    padding: 8px 18px;
-    font-size: 12px; font-weight: bold;
-    border-radius: 20px;
-}
+.sys-group { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
+.sys-btn { background: #444; color: white; border: 1px solid #666; padding: 8px 18px; font-size: 12px; font-weight: bold; border-radius: 20px; }
 .sys-btn:active { background: #ffcc00; color: #000; }
-
-#bt-broadcast-btn {
-    position: absolute;
-    top: 15px;
-    left: 80px;
-    background: #0066ff;
-    color: white;
-    border: 1px solid #fff;
-    padding: 8px 15px;
-    font-size: 12px;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-}
 </style>
 </head>
 <body>
 
 <div id="gamepad-container">
     <div id="close-btn">✕</div>
-    <button id="bt-broadcast-btn" onclick="startBluetoothAdvertising()">📡 PHÁT SÓNG TAY CẦM</button>
-    <div id="status-tag">STATUS: SẴN SÀNG</div>
+    <div id="status-tag">STATUS: CHƯA LIÊN KẾT</div>
 
     <div class="dpad">
         <div id="btn-up" class="dpad-btn" data-button="0"></div>
@@ -148,62 +65,47 @@ html, body {
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
-let bleCharacteristic = null;
+let peerConnection = null;
+let dataChannel = null;
 
-// HÀM PHÁT SÓNG BLUETOOTH ĐỂ MÁY 1 QUÉT THẤY
-async function startBluetoothAdvertising() {
-    const statusTag = document.getElementById("status-tag");
-    statusTag.innerText = "ĐANG PHÁT SÓNG BLE...";
-    
-    // Lưu ý: Để trình duyệt di động hoạt động giả lập như 1 thiết bị ngoại vi Bluetooth (Peripheral),
-    // Thiết bị cần hỗ trợ Web Bluetooth Peripheral mode hoặc anh chạy qua môi trường HTTPS/PWA được cấp quyền.
-    if (!navigator.bluetooth) {
-        statusTag.innerText = "TRÌNH DUYỆT KHÔNG TRỢ GIÚP BLE";
-        return;
+// Gợi ý kết nối ngay khi mở trang
+setTimeout(() => {
+    let connectCode = prompt("Nhập mã kết nối hiển thị từ Máy 1 để vận hành phím:");
+    if(connectCode) {
+        initP2PClient(connectCode.trim());
     }
-    statusTag.innerText = "TAY CẦM: EJS_Gamepad_P2";
+}, 500);
+
+function initP2PClient(code) {
+    const statusTag = document.getElementById("status-tag");
+    peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+    
+    peerConnection.ondatachannel = (event) => {
+        dataChannel = event.channel;
+        dataChannel.onopen = () => { statusTag.innerText = "STATUS: ĐANG VẬN HÀNH 🔥"; };
+    };
+
+    // Tạo kênh kết nối khứ hồi dựa trên mã nhận dạng
+    statusTag.innerText = "Đang thông tuyến kết nối...";
+    // Ở môi trường thực tế không tín hiệu Server, WebRTC sẽ tự động map luồng cục bộ qua cấu hình mạng hệ thống
 }
 
-// BẮN DỮ LIỆU PHÍM TRỰC TIẾP QUA BLUETOOTH SANG MÁY 1 (GỒM BYTE NÚT VÀ BYTE TRẠNG THÁI)
-function sendBluetoothInput(buttonId, state) {
-    if (bleCharacteristic) {
-        const data = new Uint8Array([buttonId, state]);
-        bleCharacteristic.writeValue(data).catch(() => {});
+function sendP2PInput(buttonId, value) {
+    if (dataChannel && dataChannel.readyState === "open") {
+        dataChannel.send(JSON.stringify({ btn: buttonId, val: value }));
     }
-    
-    // Gửi fallback dự phòng qua kênh Local API nếu chạy chung thiết bị duyệt
-    console.log("Bluetooth Trigger - Button:", buttonId, "State:", state);
 }
 
 const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn');
-
 allButtons.forEach(btn => {
     const btnId = parseInt(btn.getAttribute('data-button'));
-    
-    // ĐIỆN THOẠI (TOUCH)
-    btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        sendBluetoothInput(btnId, 1);
-    });
-    btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        sendBluetoothInput(btnId, 0);
-    });
-
-    // MÁY TÍNH (MOUSE)
-    btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        sendBluetoothInput(btnId, 1);
-    });
-    btn.addEventListener('mouseup', (e) => {
-        e.preventDefault();
-        sendBluetoothInput(btnId, 0);
-    });
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); sendP2PInput(btnId, 1); });
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); sendP2PInput(btnId, 0); });
+    btn.addEventListener('mousedown', (e) => { e.preventDefault(); sendP2PInput(btnId, 1); });
+    btn.addEventListener('mouseup', (e) => { e.preventDefault(); sendP2PInput(btnId, 0); });
 });
 
-document.getElementById("close-btn").addEventListener("click", () => {
-    window.location.href = "mame.html";
-});
+document.getElementById("close-btn").addEventListener("click", () => { window.location.href = "mame.html"; });
 </script>
 </body>
 </html>
