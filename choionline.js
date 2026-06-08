@@ -31,7 +31,7 @@ const rtcConfig = {
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
-// --- TÍNH NĂNG MỚI: THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI ---
+// --- THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI ---
 db.ref(".info/connected").on("value", (snapshot) => {
     if (snapshot.val() === false) {
         console.log("⚠️ Phát hiện mất kết nối mạng hoặc Firebase đang tải lại...");
@@ -267,3 +267,85 @@ function setupDataChannelEvents() {
         console.log("Đường truyền WebRTC Đã Mở!");
         if (!isHost) {
             document.getElementById("join-status").textContent = "🟢 Đang vào game cùng chủ phòng...";
+            setTimeout(() => {
+                closeOnlineModal();
+                startGame(currentSelectedRomUrl, currentSelectedRomName);
+            }, 1000);
+        }
+    };
+    
+    dataChannel.onclose = () => {
+        console.log("Mất kết nối mạng P2P!");
+        alert("Kết nối mạng bị gián đoạn hoặc bạn chơi đã thoát phòng!");
+        forceCloseGame();
+    };
+
+    // NHẬN TÍN HIỆU PHÍM BẤM TỪ MÁY ĐỐI THỦ GỬI SANG
+    dataChannel.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "keyup" || msg.type === "keydown") {
+            simulateEmulatorKeyEvent(msg.type, msg.key, msg.player);
+        }
+    };
+}
+
+// --- CHỨC NĂNG 4: BỘ ĐIỀU PHỐI ĐÁNH CHẶN VÀ ĐỒNG BỘ PHÍM BÀN PHÍM ---
+function setupOnlineKeySync() {
+    if (!isOnlineMode) return;
+
+    // Đánh chặn sự kiện gõ phím hệ thống
+    window.addEventListener("keydown", (e) => handleKeyEvent(e, "keydown"), true);
+    window.addEventListener("keyup", (e) => handleKeyEvent(e, "keyup"), true);
+}
+
+function handleKeyEvent(event, type) {
+    if (!isOnlineMode || !dataChannel || dataChannel.readyState !== "open") return;
+
+    const pressedKey = event.key;
+
+    if (isHost) {
+        if (P2_KEYS.includes(pressedKey.toLowerCase())) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+        
+        if (P1_KEYS.includes(pressedKey)) {
+            dataChannel.send(JSON.stringify({
+                type: type,
+                key: pressedKey,
+                player: 1
+            }));
+        }
+    } else {
+        let keyIndex = P1_KEYS.indexOf(pressedKey);
+        if (keyIndex !== -1) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            let mappedP2Key = P2_KEYS[keyIndex];
+            
+            dataChannel.send(JSON.stringify({
+                type: type,
+                key: mappedP2Key,
+                player: 2
+            }));
+            
+            simulateEmulatorKeyEvent(type, mappedP2Key, 2);
+        }
+    }
+}
+
+// Hàm giả lập tiêm phím cơ học trực tiếp vào đối tượng xử lý EmulatorJS của trình duyệt
+function simulateEmulatorKeyEvent(type, keyName, targetPlayer) {
+    const e = new KeyboardEvent(type, {
+        key: keyName,
+        bubbles: true,
+        cancelable: true
+    });
+    
+    const emulatorEl = document.querySelector(window.EJS_player || "#emulator");
+    if (emulatorEl) {
+        emulatorEl.dispatchEvent(e);
+    }
+}
