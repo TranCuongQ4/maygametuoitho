@@ -210,7 +210,7 @@ h1{
     width:90%;
 }
 
-/* KHU VỰC ĐIỀU PHỐI KẾT NỐI WEBRTC */
+/* KHU VỰC KẾT NỐI TAY CẦM PEERJS SIÊU ỔN ĐỊNH */
 .webrtc-panel {
     background: #1e2530;
     border: 2px solid #30363d;
@@ -267,7 +267,7 @@ h1{
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.0.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -291,9 +291,9 @@ h1{
         </div>
         
         <div id="qrcode-area">
-            <div id="status-text" style="font-size: 12px; color: #aaa;">Đang tạo phòng...</div>
+            <div id="status-text" style="font-size: 12px; color: #aaa;">Đang kết nối Server luồng...</div>
             <div id="qrcode"></div>
-            <div style="font-size: 11px; color: #00ffcc; margin-top: 6px;">Lấy máy phụ bấm nút màu đỏ ở trên rồi quét mã này!</div>
+            <div style="font-size: 11px; color: #00ffcc; margin-top: 6px;">Lấy máy phụ bấm nút đỏ ở trên rồi quét mã này!</div>
         </div>
     </div>
 
@@ -358,7 +358,7 @@ h1{
 </button>
 
 <button class="btn"
-    onclick="batsugun.zip')">
+    onclick="startGame('roms/batsugun.zip')">
     ⚜ Bắn Máy Bay Batsugun ⚜
 </button>
 
@@ -710,119 +710,63 @@ function dongBangHuongDan(){
     document.getElementById("guide-modal").style.display="none";
 }
 
-// --- LOGIC KẾT NỐI SỬ DỤNG SDK PUBNUB CHÍNH HÃNG (FIX HOÀN TOÀN LỖI 400 BAD REQUEST) ---
-let pubnub;
-let peerConnection;
-let dataChannel;
+// --- HỆ THỐNG KẾT NỐI NGANG HÀNG PEERJS THAY THẾ HOÀN TOÀN PUBNUB ---
+let peer;
 let qrcodeCreated = false;
-const roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
-const topic = `trancuong_mame_webrtc_${roomId}`;
-const myUUID = "host_" + Math.random().toString(36).substring(2, 11);
+// Tạo mã số phòng ngẫu nhiên gồm 4 chữ số (ví dụ: 4839)
+const roomId = Math.floor(1000 + Math.random() * 9000).toString();
 
 function kichHoatMayChuPC() {
     document.getElementById("qrcode-area").style.display = "block";
     const statusText = document.getElementById("status-text");
-    
-    if(!qrcodeCreated) {
-        new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
+
+    if (qrcodeCreated) return;
+
+    // Khởi tạo thực thể Peer với mã phòng cố định trancuong_mame_xxxx
+    peer = new Peer(`trancuong_mame_${roomId}`, {
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    });
+
+    // Khi Máy chủ đăng ký ID thành công với hệ thống định tuyến PeerJS công cộng
+    peer.on('open', function(id) {
         statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
+        // Vẽ mã QR chứa chuỗi số phòng ngắn gọn
+        new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
         qrcodeCreated = true;
-        
-        // Khởi tạo PubNub SDK
-        khoiTaoPubNubSDK();
-    }
-}
-
-function khoiTaoPubNubSDK() {
-    pubnub = new PubNub({
-        publishKey: "pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660",
-        subscribeKey: "sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf",
-        userId: myUUID // Khai báo chuẩn định dạng UUID theo yêu cầu bảo mật mới
     });
 
-    // Lắng nghe tín hiệu từ máy phụ gửi về
-    pubnub.addListener({
-        message: function(event) {
-            const msg = event.message;
-            if (!msg || msg.from === 'PC') return;
+    // Khi có tín hiệu kết nối DATA CHANNEL từ máy phụ (taycam.html) nhảy vào
+    peer.on('connection', function(conn) {
+        conn.on('open', function() {
+            statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2!</span>";
+            document.getElementById("qrcode").style.display = "none";
+        });
 
-            initWebRTC();
+        conn.on('close', function() {
+            statusText.innerText = "❌ Mất kết nối Player 2. Đang chờ quét lại...";
+            document.getElementById("qrcode").style.display = "inline-block";
+        });
 
-            if (msg.type === 'offer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer))
-                .then(() => peerConnection.createAnswer())
-                .then(answer => peerConnection.setLocalDescription(answer))
-                .then(() => {
-                    guiTinHieu({ type: 'answer', answer: peerConnection.localDescription, from: 'PC' });
-                });
-            } else if (msg.type === 'candidate' && peerConnection.remoteDescription) {
-                peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
-                .catch(err => console.log("Lỗi Ice Candidate:", err));
+        // Nhận gói tin nút bấm từ tay điều khiển điện thoại bắn qua và giả lập bàn phím PC
+        conn.on('data', function(data) {
+            if (data && data.sender === "EmulatorJS_P2") {
+                const targetEl = document.getElementById("emulator") || window;
+                if (targetEl) {
+                    targetEl.dispatchEvent(new KeyboardEvent(data.type, {
+                        key: data.key,
+                        keyCode: data.keyCode,
+                        code: data.key,
+                        bubbles: true,
+                        view: window
+                    }));
+                }
             }
-        }
+        });
     });
 
-    // Đăng ký nhận tin nhắn trên kênh phòng game
-    pubnub.subscribe({
-        channels: [topic]
-    });
-}
-
-function initWebRTC() {
-    if (peerConnection) return;
-
-    peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-    });
-
-    peerConnection.onicecandidate = e => {
-        if (e.candidate) {
-            guiTinHieu({ type: 'candidate', candidate: e.candidate, from: 'PC' });
-        }
-    };
-
-    peerConnection.ondatachannel = e => {
-        dataChannel = e.channel;
-        thietLapDataChannel();
-    };
-}
-
-function thietLapDataChannel() {
-    const statusText = document.getElementById("status-text");
-    dataChannel.onopen = () => {
-        statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2!</span>";
-        document.getElementById("qrcode").style.display = "none";
-    };
-    dataChannel.onclose = () => {
-        statusText.innerText = "❌ Mất kết nối Player 2. Đang chờ quét lại...";
-        document.getElementById("qrcode").style.display = "inline-block";
-    };
-    dataChannel.onmessage = e => {
-        const data = JSON.parse(e.data);
-        if (data.sender === "EmulatorJS_P2") {
-            const targetEl = document.getElementById("emulator") || window;
-            if (targetEl) {
-                targetEl.dispatchEvent(new KeyboardEvent(data.type, {
-                    key: data.key,
-                    keyCode: data.keyCode,
-                    code: data.key,
-                    bubbles: true,
-                    view: window
-                }));
-            }
-        }
-    };
-}
-
-function guiTinHieu(msg) {
-    if (!pubnub) return;
-    pubnub.publish({
-        channel: topic,
-        message: msg
-    }, function(status, response) {
-        if (status.error) {
-            console.log("Lỗi gửi tín hiệu:", status);
-        }
+    peer.on('error', function(err) {
+        console.log("Sự cố kết nối PeerJS: ", err);
+        statusText.innerText = "⚠️ Đang tạo lại đường truyền sạch...";
     });
 }
 </script>
