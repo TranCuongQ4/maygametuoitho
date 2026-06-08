@@ -267,6 +267,7 @@ h1{
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.0.min.js"></script>
 </head>
 <body>
 
@@ -357,7 +358,7 @@ h1{
 </button>
 
 <button class="btn"
-    onclick="startGame('roms/batsugun.zip')">
+    onclick="batsugun.zip')">
     ⚜ Bắn Máy Bay Batsugun ⚜
 </button>
 
@@ -709,13 +710,13 @@ function dongBangHuongDan(){
     document.getElementById("guide-modal").style.display="none";
 }
 
-// --- LOGIC XỬ LÝ WEBRTC MÁY CHỦ (SỬA LỖI PUBNUB 400 BAD REQUEST) ---
+// --- LOGIC KẾT NỐI SỬ DỤNG SDK PUBNUB CHÍNH HÃNG (FIX HOÀN TOÀN LỖI 400 BAD REQUEST) ---
+let pubnub;
 let peerConnection;
 let dataChannel;
 let qrcodeCreated = false;
 const roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
 const topic = `trancuong_mame_webrtc_${roomId}`;
-// Tạo một UUID ngẫu nhiên để khai báo định danh thiết bị hợp lệ theo chuẩn PubNub mới nhất
 const myUUID = "host_" + Math.random().toString(36).substring(2, 11);
 
 function kichHoatMayChuPC() {
@@ -726,12 +727,49 @@ function kichHoatMayChuPC() {
         new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
         statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
         qrcodeCreated = true;
-        langNgheTinHieuAndroid();
+        
+        // Khởi tạo PubNub SDK
+        khoiTaoPubNubSDK();
     }
 }
 
+function khoiTaoPubNubSDK() {
+    pubnub = new PubNub({
+        publishKey: "pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660",
+        subscribeKey: "sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf",
+        userId: myUUID // Khai báo chuẩn định dạng UUID theo yêu cầu bảo mật mới
+    });
+
+    // Lắng nghe tín hiệu từ máy phụ gửi về
+    pubnub.addListener({
+        message: function(event) {
+            const msg = event.message;
+            if (!msg || msg.from === 'PC') return;
+
+            initWebRTC();
+
+            if (msg.type === 'offer') {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer))
+                .then(() => peerConnection.createAnswer())
+                .then(answer => peerConnection.setLocalDescription(answer))
+                .then(() => {
+                    guiTinHieu({ type: 'answer', answer: peerConnection.localDescription, from: 'PC' });
+                });
+            } else if (msg.type === 'candidate' && peerConnection.remoteDescription) {
+                peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
+                .catch(err => console.log("Lỗi Ice Candidate:", err));
+            }
+        }
+    });
+
+    // Đăng ký nhận tin nhắn trên kênh phòng game
+    pubnub.subscribe({
+        channels: [topic]
+    });
+}
+
 function initWebRTC() {
-    if (peerConnection) return; // Không khởi tạo đè nếu đã tồn tại
+    if (peerConnection) return;
 
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -739,7 +777,7 @@ function initWebRTC() {
 
     peerConnection.onicecandidate = e => {
         if (e.candidate) {
-            guiTinHieu({ type: 'candidate', candidate: e.candidate });
+            guiTinHieu({ type: 'candidate', candidate: e.candidate, from: 'PC' });
         }
     };
 
@@ -776,42 +814,16 @@ function thietLapDataChannel() {
     };
 }
 
-async function guiTinHieu(msg) {
-    // Ép thêm UUID vào luồng gửi dữ liệu để máy chủ PubNub xử lý đúng luồng
-    await fetch(`https://pubsub.pubnub.com/publish/pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/0/${topic}/0?uuid=${myUUID}`, {
-        method: "POST",
-        body: JSON.stringify(msg)
-    });
-}
-
-function langNgheTinHieuAndroid() {
-    // SỬA LỖI CHÍNH: Thêm tham số &uuid vào URL EventSource để fix triệt để lỗi 400 Bad Request
-    const sse = new EventSource(`https://pubsub.pubnub.com/v2/subscribe/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/${topic}/0?heartbeat=30&uuid=${myUUID}`);
-    
-    sse.onmessage = async function(e) {
-        const rawData = JSON.parse(e.data);
-        const msg = rawData.m;
-        if (!msg || msg.from === 'PC') return;
-
-        initWebRTC();
-
-        if (msg.type === 'offer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer));
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            guiTinHieu({ type: 'answer', answer: answer, from: 'PC' });
-        } else if (msg.type === 'candidate' && peerConnection.remoteDescription) {
-            try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
-            } catch(err) {
-                console.log("Lỗi nạp ICE candidate: ", err);
-            }
+function guiTinHieu(msg) {
+    if (!pubnub) return;
+    pubnub.publish({
+        channel: topic,
+        message: msg
+    }, function(status, response) {
+        if (status.error) {
+            console.log("Lỗi gửi tín hiệu:", status);
         }
-    };
-
-    sse.onerror = function() {
-        console.log("Luồng tín hiệu gặp sự cố, hệ thống đang tự động kết nối lại...");
-    };
+    });
 }
 </script>
 </body>
