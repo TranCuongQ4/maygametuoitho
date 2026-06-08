@@ -13,14 +13,13 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 .status-dot { display: inline-block; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; margin-right: 5px; }
 .connected .status-dot { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
 
-/* Cụm vai L và R nằm trên cùng */
 .shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; margin-top: 2px; }
 .shoulder-btn { width: 90px; height: 35px; background: #28303d; border: 2px solid #444; color: #fff; font-weight: bold; border-radius: 15px 15px 5px 5px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
 .shoulder-btn:active, .shoulder-btn.active { background: #00ffcc; color: #000; border-color: #fff; }
 
 .gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 5px; }
 
-/* DPAD DI CHUYỂN CHUẨN MAME PLAYER 2 (Lên: up arrow, Xuống: down arrow, Trái: left arrow, Phải: right arrow) */
+/* CỤM DI CHUYỂN DPAD MAP CHUẨN PLAYER 2 EMULATORJS (I / K / J / L) */
 .dpad { position: relative; width: 150px; height: 150px; }
 .dpad-btn { position: absolute; background: #21262d; border: 2px solid #30363d; color: #8b949e; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
 .dpad-btn:active, .dpad-btn.active { background: #00ffcc; color: #000; border-color: #fff; box-shadow: 0 0 12px #00ffcc; }
@@ -30,24 +29,21 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 .dpad-right { top: 50px; right: 0; width: 55px; height: 50px; border-radius: 0 8px 8px 0; }
 .dpad-center { top: 50px; left: 50px; width: 50px; height: 50px; background: #30363d; border: none; }
 
-/* HỆ THỐNG ĐIỀU KHIỂN TRUNG TÂM (SELECT = v, START = enter) */
 .center-controls { display: flex; flex-direction: column; gap: 8px; align-items: center; }
-.sys-btn { background: #21262d; border: 1px solid #444; color: #fff; padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: bold; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.2); width: 90px; }
+.sys-btn { background: #21262d; border: 1px solid #444; color: #fff; padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: bold; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.2); width: 95px; }
 .sys-btn:active, .sys-btn.active { background: #ffcc00; color: #000; }
 .btn-scan { background: #ff3366; color: #fff; font-weight: bold; border: 1px solid #fff; width: 100px; padding: 8px 10px; border-radius: 6px; }
 
-/* CỤM NÚT HÀNH ĐỘNG HÌNH KIM CƯƠNG CHUẨN SNES (B=x, Y=s, A=z, X=a) */
+/* CỤM NÚT HÌNH KIM CƯƠNG SNES CHUẨN CHO P2 */
 .snes-diamond { position: relative; width: 150px; height: 150px; }
 .action-btn { position: absolute; width: 48px; height: 48px; background: #21262d; border: 2px solid #444; color: #fff; border-radius: 50%; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 .action-btn:active, .action-btn.active { background: currentColor !important; color: #000 !important; box-shadow: 0 0 15px currentColor; border-color: #fff !important; }
 
-/* Định vị nút theo form kim cương SNES */
-.btn-x { top: 0; left: 51px; border-color: #3399ff; color: #3399ff; }   /* Nút X nằm TRÊN */
-.btn-y { top: 51px; left: 0; border-color: #9933ff; color: #9933ff; }   /* Nút Y nằm TRÁI */
-.btn-a { top: 51px; right: 0; border-color: #ff3366; color: #ff3366; }  /* Nút A nằm PHẢI */
-.btn-b { bottom: 0; left: 51px; border-color: #ffcc00; color: #ffcc00; } /* Nút B nằm DƯỚI */
+.btn-x { top: 0; left: 51px; border-color: #3399ff; color: #3399ff; }   
+.btn-y { top: 51px; left: 0; border-color: #9933ff; color: #9933ff; }   
+.btn-a { top: 51px; right: 0; border-color: #ff3366; color: #ff3366; }  
+.btn-b { bottom: 0; left: 51px; border-color: #ffcc00; color: #ffcc00; } 
 
-/* KHU VỰC CAMERA QUÉT */
 #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; flex-direction: column; justify-content: center; align-items: center; }
 #reader { width: 260px; height: 260px; background: #000; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; }
 </style>
@@ -62,30 +58,30 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 </div>
 
 <div class="shoulder-area">
-    <div class="shoulder-btn" data-key="q" data-code="KeyQ">L</div>
-    <div class="shoulder-btn" data-key="e" data-code="KeyE">R</div>
+    <div class="shoulder-btn" data-key="u" data-keycode="85" data-code="KeyU">L</div>
+    <div class="shoulder-btn" data-key="o" data-keycode="79" data-code="KeyO">R</div>
 </div>
 
 <div class="gamepad-area">
     <div class="dpad">
-        <div class="dpad-btn dpad-up" data-key="ArrowUp" data-code="ArrowUp">▲</div>
-        <div class="dpad-btn dpad-left" data-key="ArrowLeft" data-code="ArrowLeft">◀</div>
+        <div class="dpad-btn dpad-up" data-key="i" data-keycode="73" data-code="KeyI">▲</div>
+        <div class="dpad-btn dpad-left" data-key="j" data-keycode="74" data-code="KeyJ">◀</div>
         <div class="dpad-btn dpad-center"></div>
-        <div class="dpad-btn dpad-right" data-key="ArrowRight" data-code="ArrowRight">▶</div>
-        <div class="dpad-btn dpad-down" data-key="ArrowDown" data-code="ArrowDown">▼</div>
+        <div class="dpad-btn dpad-right" data-key="l" data-keycode="76" data-code="KeyL">▶</div>
+        <div class="dpad-btn dpad-down" data-key="k" data-keycode="75" data-code="KeyK">▼</div>
     </div>
 
     <div class="center-controls">
         <button class="btn-scan" onclick="moCameraQuet()">📷 QUÉT QR</button>
-        <div class="sys-btn" data-key="v" data-code="KeyV" style="margin-top: 5px;">SELECT (COIN)</div>
-        <div class="sys-btn" data-key="Enter" data-code="Enter">START</div>
+        <div class="sys-btn" data-key="0" data-keycode="48" data-code="Digit0" style="margin-top: 5px;">SELECT (COIN)</div>
+        <div class="sys-btn" data-key="9" data-keycode="57" data-code="Digit9">START</div>
     </div>
 
     <div class="snes-diamond">
-        <div class="action-btn btn-x" data-key="a" data-code="KeyA">X</div>
-        <div class="action-btn btn-y" data-key="s" data-code="KeyS">Y</div>
-        <div class="action-btn btn-a" data-key="z" data-code="KeyZ">A</div>
-        <div class="action-btn btn-b" data-key="x" data-code="KeyX">B</div>
+        <div class="action-btn btn-x" data-key="f" data-keycode="70" data-code="KeyF">X</div>
+        <div class="action-btn btn-y" data-key="c" data-keycode="67" data-code="KeyC">Y</div>
+        <div class="action-btn btn-a" data-key="v" data-keycode="86" data-code="KeyV">A</div>
+        <div class="action-btn btn-b" data-key="d" data-keycode="68" data-code="KeyD">B</div>
     </div>
 </div>
 
@@ -106,10 +102,7 @@ function moCameraQuet() {
     html5QrcodeScanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 200, height: 200 } },
-        (qrText) => {
-            dongCameraQuet();
-            ketNoiMayChuPeerJS(qrText.trim());
-        },
+        (qrText) => { dongCameraQuet(); ketNoiMayChuPeerJS(qrText.trim()); },
         () => {}
     ).catch(() => {
         alert("Không mở được camera. Hãy cấp quyền truy cập camera cho trình duyệt!");
@@ -119,62 +112,44 @@ function moCameraQuet() {
 
 function dongCameraQuet() {
     document.getElementById("camera-overlay").style.display = "none";
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().catch(()=>{});
-    }
+    if (html5QrcodeScanner) { html5QrcodeScanner.stop().catch(()=>{}); }
 }
 
 function ketNoiMayChuPeerJS(roomId) {
     const statusBar = document.getElementById("status-bar");
     const statusText = document.getElementById("status-text");
-    
     statusText.innerText = `Đang kết nối đến mã phòng: ${roomId}...`;
 
-    if (peer) {
-        peer.destroy();
-    }
+    if (peer) { peer.destroy(); }
 
-    // Khởi tạo đối tượng khách PeerJS
-    peer = new Peer({
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
+    peer = new Peer({ config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
 
     peer.on('open', function() {
-        // Thực hiện cuộc gọi kết nối trực tiếp Data Channel đến ID phòng của PC
         conn = peer.connect(`trancuong_mame_${roomId}`);
-
         conn.on('open', function() {
             statusBar.classList.add("connected");
             statusText.innerHTML = "<span class='status-dot'></span>KẾT NỐI TAY CẦM THÀNH CÔNG!";
         });
-
         conn.on('close', function() {
             statusBar.classList.remove("connected");
             statusText.innerText = "❌ Mất kết nối. Vui lòng quét lại.";
         });
-
-        conn.on('error', function(err) {
-            statusText.innerText = "❌ Lỗi đường truyền mạng.";
-        });
     });
-
-    peer.on('error', function(err) {
-        statusText.innerText = "❌ Không tìm thấy phòng PC này.";
-    });
+    peer.on('error', function(err) { statusText.innerText = "❌ Không tìm thấy phòng PC này."; });
 }
 
-function guiLenhPhim(type, key, code) {
+function guiLenhPhim(type, key, keyCode, code) {
     if (conn && conn.open) {
         conn.send({
             sender: "EmulatorJS_P2",
             type: type,
             key: key,
+            keyCode: parseInt(keyCode),
             code: code
         });
     }
 }
 
-// HỆ THỐNG XỬ LÝ CẢM ỨNG ĐA ĐIỂM (MULTI-TOUCH)
 const activeButtons = new Set();
 function handleTouch(e) {
     const currentTouches = new Set();
@@ -188,14 +163,14 @@ function handleTouch(e) {
     activeButtons.forEach(btn => {
         if (!currentTouches.has(btn)) {
             btn.classList.remove('active');
-            guiLenhPhim("keyup", btn.getAttribute('data-key'), btn.getAttribute('data-code'));
+            guiLenhPhim("keyup", btn.getAttribute('data-key'), btn.getAttribute('data-keycode'), btn.getAttribute('data-code'));
             activeButtons.delete(btn);
         }
     });
     currentTouches.forEach(btn => {
         if (!activeButtons.has(btn)) {
             btn.classList.add('active');
-            guiLenhPhim("keydown", btn.getAttribute('data-key'), btn.getAttribute('data-code'));
+            guiLenhPhim("keydown", btn.getAttribute('data-key'), btn.getAttribute('data-keycode'), btn.getAttribute('data-code'));
             activeButtons.add(btn);
         }
     });
