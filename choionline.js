@@ -31,7 +31,7 @@ const rtcConfig = {
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
-// --- THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI ---
+// --- THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI CỦA FIREBASE ---
 db.ref(".info/connected").on("value", (snapshot) => {
     if (snapshot.val() === false) {
         console.log("⚠️ Phát hiện mất kết nối mạng hoặc Firebase đang tải lại...");
@@ -71,7 +71,7 @@ window.addEventListener("DOMContentLoaded", () => {
         const body = document.getElementById("online-body");
         if(body) body.innerHTML = `<p style='color:#00ffcc;'>🎮 Đang tham gia phòng: <b>${currentRoomId}</b></p><p id='join-status'>⚡ Đang thiết lập kết nối mạng P2P...</p>`;
         
-        // Tiến hành chạy hàm kết nối của khách vào phòng
+        // Khách tiến hành vào phòng công khai
         joinOnlineRoom(currentRoomId, gameParam);
     }
 });
@@ -81,7 +81,7 @@ function createOnlineRoom() {
     isOnlineMode = true;
     isHost = true;
     myRole = "host";
-    pendingCandidates = []; // Reset hàng đợi candidates
+    pendingCandidates = []; 
     
     if (peerConnection) {
         try { peerConnection.close(); } catch(e){}
@@ -89,14 +89,13 @@ function createOnlineRoom() {
     
     // --- BỘ QUẢN LÝ RESET DỮ LIỆU CHỐNG TRÀN FIREBASE (12 TIẾNG) ---
     const now = Date.now();
-    const twelveHours = 12 * 60 * 60 * 1000; // 12 giờ tính bằng mili-giây
+    const twelveHours = 12 * 60 * 60 * 1000; 
     
     db.ref("rooms").once("value", (snapshot) => {
         const rooms = snapshot.val();
         if (rooms) {
             Object.keys(rooms).forEach(roomId => {
                 const room = rooms[roomId];
-                // Nếu phòng không có mốc thời gian hoặc đã tồn tại quá 12 tiếng, tự động xóa sạch
                 if (!room.createdAt || (now - room.createdAt) > twelveHours) {
                     db.ref("rooms/" + roomId).remove()
                         .then(() => console.log(`🗑️ Đã xóa dọn dẹp phòng cũ tránh tràn Firebase: ${roomId}`))
@@ -115,7 +114,7 @@ function createOnlineRoom() {
     document.getElementById("room-link-input").value = roomLink;
     document.getElementById("room-info-section").style.display = "block";
     
-    // Khởi tạo thông tin phòng lên Firebase kèm mốc thời gian thực để phục vụ bộ quét xóa
+    // Khởi tạo thông tin phòng lên Firebase kèm mốc thời gian thực
     roomRef.set({
         gameUrl: currentSelectedRomUrl,
         gameName: currentSelectedRomName,
@@ -123,41 +122,51 @@ function createOnlineRoom() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Lắng nghe xem có Khách kết nối và gửi câu trả lời mạng (Answer) lên Firebase không
+    // Lắng nghe tín hiệu Re-connect hoặc Connect mới từ Khách gửi lên
     roomRef.child("answer").on("value", async (snapshot) => {
         const answer = snapshot.val();
         if (answer && peerConnection && peerConnection.signalingState === "have-local-offer") {
             try {
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-                document.getElementById("connection-status").textContent = "🟢 Đã kết nối thành công! Trận đấu bắt đầu...";
-                document.getElementById("connection-status").style.color = "#00ffcc";
+                console.log("🟢 Đồng bộ mạng P2P thành công!");
+                
+                const statusEl = document.getElementById("connection-status");
+                if (statusEl) {
+                    statusEl.textContent = "🟢 Đã kết nối bạn chơi! Trận đấu bắt đầu...";
+                    statusEl.style.color = "#00ffcc";
+                }
                 
                 processPendingCandidates();
 
-                // Đợi 1 giây cho đường ống mạng ổn định rồi kích hoạt màn hình game
-                setTimeout(() => {
+                // Nếu game chưa chạy thì mới kích hoạt, nếu đang chạy sẵn (khách vào lại) thì bỏ qua không load lại game
+                const emulatorEl = document.querySelector("#emulator");
+                if (!emulatorEl || emulatorEl.innerHTML === "") {
+                    setTimeout(() => {
+                        if (typeof closeOnlineModal === "function") closeOnlineModal();
+                        startGame(currentSelectedRomUrl, currentSelectedRomName);
+                    }, 1000);
+                } else {
                     if (typeof closeOnlineModal === "function") closeOnlineModal();
-                    startGame(currentSelectedRomUrl, currentSelectedRomName);
-                }, 1000);
+                }
             } catch(err) {
-                console.log("Lỗi đồng bộ cấu hình bắt tay mạng:", err);
+                console.log("Lỗi cấu hình bắt tay mạng:", err);
             }
         }
     });
 
-    // Lắng nghe gói định vị ICE mạng từ khách gửi lên
+    // Lắng nghe các ICE Candidate mới từ khách gửi lên (Dùng để bắt tay lại khi mất mạng)
     roomRef.child("guestCandidates").on("child_added", (snapshot) => {
         const candidate = snapshot.val();
         if (candidate && peerConnection) {
             if (!peerConnection.remoteDescription) {
                 pendingCandidates.push(candidate);
             } else {
-                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi nạp định vị mạng:", e));
+                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
             }
         }
     });
 
-    // Khởi tạo quy trình WebRTC Web Connection
+    // Khởi tạo quy trình WebRTC
     setupWebRTC(roomRef);
 }
 
@@ -166,7 +175,7 @@ function processPendingCandidates() {
     if (peerConnection && peerConnection.remoteDescription) {
         while (pendingCandidates.length > 0) {
             const candidate = pendingCandidates.shift();
-            peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi giải phóng Candidate:", e));
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
         }
     }
 }
@@ -183,7 +192,7 @@ function copyRoomLink() {
 // --- CHỨC NĂNG 2: THAM GIA PHÒNG VÀ TỰ ĐỘNG RECONNECT (DÀNH CHO GUEST) ---
 async function joinOnlineRoom(roomId, gameUrl) {
     const roomRef = db.ref("rooms/" + roomId);
-    pendingCandidates = []; // Reset hàng đợi candidates
+    pendingCandidates = []; 
     
     if (peerConnection) {
         try { peerConnection.close(); } catch(e){}
@@ -228,6 +237,7 @@ async function joinOnlineRoom(roomId, gameUrl) {
             await peerConnection.setLocalDescription(answer);
             
             const answerObj = JSON.parse(JSON.stringify(answer));
+            // Cập nhật lên Firebase trạng thái phòng và câu trả lời mạng
             await roomRef.update({ answer: answerObj, status: "connected" });
 
             processPendingCandidates();
@@ -241,7 +251,7 @@ async function joinOnlineRoom(roomId, gameUrl) {
                 if (!peerConnection.remoteDescription) {
                     pendingCandidates.push(candidate);
                 } else {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi nạp định vị mạng:", e));
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
                 }
             }
         });
@@ -276,35 +286,62 @@ async function setupWebRTC(roomRef) {
 // Cấu hình sự kiện mở đóng của đường truyền data channel
 function setupDataChannelEvents() {
     dataChannel.onopen = () => {
-        console.log("Đường truyền WebRTC Đã Mở!");
+        console.log("🚀 Đường truyền WebRTC đã kết nối thành công!");
         
-        // KÍCH HOẠT ĐỒNG BỘ PHÍM NGAY KHI ĐƯỜNG TRUYỀN MỞ THÀNH CÔNG
+        // Đăng ký bộ lắng nghe và đồng bộ tổ hợp phím cơ học ngay lập tức
         setupOnlineKeySync();
 
         if (!isHost) {
             const joinStatusEl = document.getElementById("join-status");
-            if(joinStatusEl) joinStatusEl.textContent = "🟢 Đang vào game cùng chủ phòng...";
-            setTimeout(() => {
+            if(joinStatusEl) joinStatusEl.textContent = "🟢 Đang nạp lại trạng thái trận đấu...";
+            
+            // Nếu khách rớt mạng vào lại và game đang chạy sẵn thì không khởi động lại Emulator
+            const emulatorEl = document.querySelector("#emulator");
+            if (!emulatorEl || emulatorEl.innerHTML === "") {
+                setTimeout(() => {
+                    if (typeof closeOnlineModal === "function") closeOnlineModal();
+                    startGame(currentSelectedRomUrl, currentSelectedRomName);
+                }, 1000);
+            } else {
                 if (typeof closeOnlineModal === "function") closeOnlineModal();
-                startGame(currentSelectedRomUrl, currentSelectedRomName);
-            }, 1000);
+            }
         }
     };
     
     dataChannel.onclose = () => {
-        console.log("Mất kết nối mạng P2P!");
+        console.log("⚠️ Đường truyền mạng P2P cục bộ bị đóng.");
+        
+        // --- CƠ CHẾ SỐNG CÒN: KHÔNG ĐÁ NGƯỜI CHƠI RA KHỎI GAME ---
+        const statusEl = document.getElementById("connection-status");
+        if (statusEl) {
+            statusEl.textContent = "⚠️ Bạn chơi đã mất kết nối. Bạn vẫn có thể chơi tiếp một mình!";
+            statusEl.style.color = "#ff9900";
+        }
+
+        // Nếu bản thân mình là Guest (Khách) bị văng, hệ thống tự động tìm cách kết nối lại vào phòng cũ âm thầm
         if (!isHost && isOnlineMode && currentRoomId) {
-            console.log("🔄 Khách bị rớt mạng, tiến hành tự động kết nối lại vào phòng...");
+            console.log("🔄 Đang thử tự động kết nối lại vào phòng bằng link ban đầu...");
             setTimeout(() => {
                 joinOnlineRoom(currentRoomId, currentSelectedRomUrl);
+            }, 3000);
+        }
+        
+        // Nếu là Host bị mất bạn chơi, dọn sạch dữ liệu cũ để chuẩn bị cho Khách click link vào lại từ đầu
+        if (isHost && currentRoomId) {
+            console.log("🔄 Host làm sạch kênh phụ để đón khách quay lại phòng cũ...");
+            const roomRef = db.ref("rooms/" + currentRoomId);
+            roomRef.child("answer").remove();
+            roomRef.child("guestCandidates").remove();
+            roomRef.child("hostCandidates").remove();
+            
+            // Tạo lại liên kết WebRTC mới trên máy Host để mở cổng chờ Khách click link vào lại
+            setTimeout(() => {
+                setupWebRTC(roomRef);
             }, 2000);
-        } else {
-            alert("Kết nối mạng bị gián đoạn hoặc phòng chơi kết thúc!");
-            forceCloseGame();
         }
     };
 
-    // NHẬN TÍN HIỆU PHÍM BẤM TỪ MÁY ĐỐI THỦ GỬI SANG VÀ TIÊM VÀO EMULATOR
+    // NHẬN TÍN HIỆU PHÍM BẤM TỪ MÁY ĐỐI THỦ GỬI SANG VÀ GIẢ LẬP TIÊM VÀO EMULATOR
     dataChannel.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         if (msg.type === "keyup" || msg.type === "keydown") {
@@ -316,9 +353,12 @@ function setupDataChannelEvents() {
 // --- CHỨC NĂNG 4: BỘ ĐIỀU PHỐI ĐÁNH CHẶN VÀ ĐỒNG BỘ PHÍM BÀN PHÍM ---
 function setupOnlineKeySync() {
     if (!isOnlineMode) return;
-    console.log("⌨️ Hệ thống đánh chặn phím Online đã được kích hoạt thành công!");
+    console.log("⌨️ Hệ thống đánh chặn phân rã luồng Player đã chạy.");
 
-    // Sử dụng bộ bắt sự kiện ở tầng cao nhất (capture mode: true) để chia tách luồng phím cơ học
+    // ÉP CẤU HÌNH EMULATORJS BIẾT LÀ CÓ 2 PLAYER CHƠI CHUNG TRÊN MỘT MÀN HÌNH
+    window.EJS_players = 2; 
+
+    // Sử dụng cơ chế bắt sự kiện ưu tiên cao nhất (Capture mode: true)
     window.addEventListener("keydown", (e) => handleKeyEvent(e, "keydown"), true);
     window.addEventListener("keyup", (e) => handleKeyEvent(e, "keyup"), true);
 }
@@ -329,14 +369,14 @@ function handleKeyEvent(event, type) {
     const pressedKey = event.key;
 
     if (isHost) {
-        // Nếu là Host (Player 1) thì tuyệt đối chặn không cho phím Player 2 (w,a,s,d...) tác động lên máy mình
+        // Nếu là Host (Player 1) -> Tuyệt đối chặn không cho dải phím Player 2 tác động vào nhân đồ họa của mình
         if (P2_KEYS.includes(pressedKey.toLowerCase())) {
             event.preventDefault();
             event.stopPropagation();
             return;
         }
         
-        // Host ấn phím Player 1 -> Gửi tín hiệu sang máy Khách để điều khiển P1 bên đó
+        // Nếu bấm đúng phím Player 1 -> Cho phép chạy trên máy mình đồng thời gửi lệnh sang máy Khách để đồng bộ P1
         if (P1_KEYS.includes(pressedKey)) {
             dataChannel.send(JSON.stringify({
                 type: type,
@@ -345,24 +385,24 @@ function handleKeyEvent(event, type) {
             }));
         }
     } else {
-        // Nếu là Khách (Player 2)
+        // Nếu mình là Khách (Đóng vai trò Player 2 điều khiển nhân vật thứ 2 trong game)
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
-            // Chặn đứng không cho phím mặc định (Mũi tên, Z, X...) kích hoạt Player 1 của máy Khách
+            // Chặn đứng các phím điều hướng gốc của Player 1 không cho ăn vào máy Khách
             event.preventDefault();
             event.stopPropagation();
             
-            // Map phím của Khách thành phím P2 hệ thống (w, a, s, d...)
+            // Chuyển hóa phím bấm từ tập lệnh Player 1 thành tập lệnh Player 2 hệ thống (w, a, s, d...)
             let mappedP2Key = P2_KEYS[keyIndex];
             
-            // Gửi phím đã map sang cho máy Host nhận dạng điều khiển Player 2
+            // Bắn tín hiệu phím Player 2 sang cho máy Host để điều khiển nhân vật Player 2 bên máy chủ
             dataChannel.send(JSON.stringify({
                 type: type,
                 key: mappedP2Key,
                 player: 2
             }));
             
-            // Đồng thời tự giả lập tiêm phím P2 vào màn hình game của chính mình
+            // Đồng thời tiêm phím Player 2 này vào Emulator máy mình để hiển thị khớp chuyển động
             simulateEmulatorKeyEvent(type, mappedP2Key, 2);
         }
     }
