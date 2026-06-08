@@ -3,89 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tay Cầm Ảo WebRTC - Player 2</title>
+<title>Tay Cầm Ảo PeerJS - SNES Player 2</title>
 <style>
 * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #161b22; font-family: Arial, sans-serif; }
-body { display: flex; flex-direction: column; justify-content: space-between; padding: 10px 20px; }
-.header-status { width: 100%; display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 14px; height: 40px; border-bottom: 1px solid #30363d; }
+body { display: flex; flex-direction: column; justify-content: space-between; padding: 5px 15px; }
+
+.header-status { width: 100%; display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 13px; height: 35px; border-bottom: 1px solid #30363d; }
 .status-dot { display: inline-block; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; margin-right: 5px; }
 .connected .status-dot { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
-.gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; }
 
-/* DPAD DI CHUYỂN P2 (r, d, g, f) */
-.dpad { position: relative; width: 160px; height: 160px; }
-.dpad-btn { position: absolute; background: #21262d; border: 2px solid #30363d; color: #8b949e; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-.dpad-btn:active, .dpad-btn.active { background: #00ffcc; color: #000; border-color: #fff; box-shadow: 0 0 15px #00ffcc; }
-.dpad-up { top: 0; left: 55px; width: 50px; height: 55px; border-radius: 10px 10px 0 0; }
-.dpad-down { bottom: 0; left: 55px; width: 50px; height: 55px; border-radius: 0 0 10px 10px; }
-.dpad-left { top: 55px; left: 0; width: 55px; height: 50px; border-radius: 10px 0 0 10px; }
-.dpad-right { top: 55px; right: 0; width: 55px; height: 50px; border-radius: 0 10px 10px 0; }
+/* Cụm vai L và R nằm trên cùng */
+.shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; margin-top: 2px; }
+.shoulder-btn { width: 90px; height: 35px; background: #28303d; border: 2px solid #444; color: #fff; font-weight: bold; border-radius: 15px 15px 5px 5px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
+.shoulder-btn:active, .shoulder-btn.active { background: #00ffcc; color: #000; border-color: #fff; }
 
-.center-controls { display: flex; flex-direction: column; gap: 10px; }
-.sys-btn { background: #21262d; border: 1px solid #444; color: #fff; padding: 8px 15px; border-radius: 20px; font-size: 11px; font-weight: bold; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.2); cursor: pointer; }
+.gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 5px; }
+
+/* DPAD DI CHUYỂN CHUẨN MAME PLAYER 2 (Lên: up arrow, Xuống: down arrow, Trái: left arrow, Phải: right arrow) */
+.dpad { position: relative; width: 150px; height: 150px; }
+.dpad-btn { position: absolute; background: #21262d; border: 2px solid #30363d; color: #8b949e; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+.dpad-btn:active, .dpad-btn.active { background: #00ffcc; color: #000; border-color: #fff; box-shadow: 0 0 12px #00ffcc; }
+.dpad-up { top: 0; left: 50px; width: 50px; height: 55px; border-radius: 8px 8px 0 0; }
+.dpad-down { bottom: 0; left: 50px; width: 50px; height: 55px; border-radius: 0 0 8px 8px; }
+.dpad-left { top: 50px; left: 0; width: 55px; height: 50px; border-radius: 8px 0 0 8px; }
+.dpad-right { top: 50px; right: 0; width: 55px; height: 50px; border-radius: 0 8px 8px 0; }
+.dpad-center { top: 50px; left: 50px; width: 50px; height: 50px; background: #30363d; border: none; }
+
+/* HỆ THỐNG ĐIỀU KHIỂN TRUNG TÂM (SELECT = v, START = enter) */
+.center-controls { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.sys-btn { background: #21262d; border: 1px solid #444; color: #fff; padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: bold; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.2); width: 90px; }
 .sys-btn:active, .sys-btn.active { background: #ffcc00; color: #000; }
-.btn-scan { background: #00ffcc; color: #000; font-weight: bold; border: 1px solid #fff; }
+.btn-scan { background: #ff3366; color: #fff; font-weight: bold; border: 1px solid #fff; width: 100px; padding: 8px 10px; border-radius: 6px; }
 
-/* PHÍM ĐÁNH P2 (a, s, q, w, i, k) */
-.action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.action-btn { width: 55px; height: 55px; background: #21262d; border: 2px solid #444; color: #fff; border-radius: 50%; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
-.btn-1 { border-color: #ff3366; color: #ff3366; }
-.btn-2 { border-color: #ffcc00; color: #ffcc00; }
-.btn-3 { border-color: #00ffcc; color: #00ffcc; }
-.btn-4 { border-color: #3399ff; color: #3399ff; }
-.btn-5 { border-color: #9933ff; color: #9933ff; }
-.btn-6 { border-color: #ffffff; color: #ffffff; }
-.action-btn:active, .action-btn.active { background: currentColor !important; color: #000 !important; box-shadow: 0 0 15px currentColor; }
+/* CỤM NÚT HÀNH ĐỘNG HÌNH KIM CƯƠNG CHUẨN SNES (B=x, Y=s, A=z, X=a) */
+.snes-diamond { position: relative; width: 150px; height: 150px; }
+.action-btn { position: absolute; width: 48px; height: 48px; background: #21262d; border: 2px solid #444; color: #fff; border-radius: 50%; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+.action-btn:active, .action-btn.active { background: currentColor !important; color: #000 !important; box-shadow: 0 0 15px currentColor; border-color: #fff !important; }
 
-/* KHU VỰC CAMERA QUÈT */
+/* Định vị nút theo form kim cương SNES */
+.btn-x { top: 0; left: 51px; border-color: #3399ff; color: #3399ff; }   /* Nút X nằm TRÊN */
+.btn-y { top: 51px; left: 0; border-color: #9933ff; color: #9933ff; }   /* Nút Y nằm TRÁI */
+.btn-a { top: 51px; right: 0; border-color: #ff3366; color: #ff3366; }  /* Nút A nằm PHẢI */
+.btn-b { bottom: 0; left: 51px; border-color: #ffcc00; color: #ffcc00; } /* Nút B nằm DƯỚI */
+
+/* KHU VỰC CAMERA QUÉT */
 #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; flex-direction: column; justify-content: center; align-items: center; }
-#reader { width: 280px; height: 280px; background: #000; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; }
+#reader { width: 260px; height: 260px; background: #000; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
 
 <div class="header-status" id="status-bar">
-    <div>🎮 THIẾT BỊ: <span style="color: #ffcc00; font-weight:bold;">TAY CẦM P2</span></div>
-    <div id="status-text"><span class="status-dot"></span>Chưa kết nối. Hãy quét QR!</div>
+    <div>🎮 THIẾT BỊ: <span style="color: #ffcc00; font-weight:bold;">TAY CẦM P2 (SNES)</span></div>
+    <div id="status-text"><span class="status-dot"></span>Chưa kết nối. Nhấn nút đỏ quét QR!</div>
+</div>
+
+<div class="shoulder-area">
+    <div class="shoulder-btn" data-key="q" data-code="KeyQ">L</div>
+    <div class="shoulder-btn" data-key="e" data-code="KeyE">R</div>
 </div>
 
 <div class="gamepad-area">
     <div class="dpad">
-        <div class="dpad-btn dpad-up" data-key="r" data-code="82">▲</div>
-        <div class="dpad-btn dpad-left" data-key="d" data-code="68">◀</div>
-        <div class="dpad-btn" style="top:55px; left:55px; width:50px; height:50px; background:#30363d; border:none;"></div>
-        <div class="dpad-btn dpad-right" data-key="g" data-code="71">▶</div>
-        <div class="dpad-btn dpad-down" data-key="f" data-code="70">▼</div>
+        <div class="dpad-btn dpad-up" data-key="ArrowUp" data-code="ArrowUp">▲</div>
+        <div class="dpad-btn dpad-left" data-key="ArrowLeft" data-code="ArrowLeft">◀</div>
+        <div class="dpad-btn dpad-center"></div>
+        <div class="dpad-btn dpad-right" data-key="ArrowRight" data-code="ArrowRight">▶</div>
+        <div class="dpad-btn dpad-down" data-key="ArrowDown" data-code="ArrowDown">▼</div>
     </div>
 
     <div class="center-controls">
-        <div class="sys-btn btn-scan" onclick="moCameraQuet()">📷 QUÉT QR</div>
-        <div class="sys-btn" data-key="6" data-code="54">COIN P2</div>
-        <div class="sys-btn" data-key="2" data-code="50">START P2</div>
+        <button class="btn-scan" onclick="moCameraQuet()">📷 QUÉT QR</button>
+        <div class="sys-btn" data-key="v" data-code="KeyV" style="margin-top: 5px;">SELECT (COIN)</div>
+        <div class="sys-btn" data-key="Enter" data-code="Enter">START</div>
     </div>
 
-    <div class="action-buttons">
-        <div class="action-btn btn-1" data-key="a" data-code="65">1</div>
-        <div class="action-btn btn-2" data-key="s" data-code="83">2</div>
-        <div class="action-btn btn-3" data-key="q" data-code="81">3</div>
-        <div class="action-btn btn-4" data-key="w" data-code="87">4</div>
-        <div class="action-btn btn-5" data-key="i" data-code="73">5</div>
-        <div class="action-btn btn-6" data-key="k" data-code="75">6</div>
+    <div class="snes-diamond">
+        <div class="action-btn btn-x" data-key="a" data-code="KeyA">X</div>
+        <div class="action-btn btn-y" data-key="s" data-code="KeyS">Y</div>
+        <div class="action-btn btn-a" data-key="z" data-code="KeyZ">A</div>
+        <div class="action-btn btn-b" data-key="x" data-code="KeyX">B</div>
     </div>
 </div>
 
 <div id="camera-overlay">
     <div style="color: #00ffcc; margin-bottom: 15px; font-weight: bold;">ĐƯA CAMERA VÀO MÃ QR TRÊN PC</div>
     <div id="reader"></div>
-    <div class="sys-btn" style="margin-top: 20px; background: #ff3366;" onclick="dongCameraQuet()">ĐÓNG LẠI</div>
+    <div class="sys-btn" style="margin-top: 20px; background: #ff3366; width: 120px; padding: 10px;" onclick="dongCameraQuet()">ĐÓNG LẠI</div>
 </div>
 
 <script>
-let peerConnection;
-let dataChannel;
-let html5QrcodeScanner;
+let peer = null;
+let conn = null;
+let html5QrcodeScanner = null;
 
 function moCameraQuet() {
     document.getElementById("camera-overlay").style.display = "flex";
@@ -94,13 +107,12 @@ function moCameraQuet() {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 200, height: 200 } },
         (qrText) => {
-            // Nhận diện text từ QR chính là mã phòng số ngẫu nhiên từ máy anh
             dongCameraQuet();
-            khoiTaoWebRTC_Android(qrText.trim());
+            ketNoiMayChuPeerJS(qrText.trim());
         },
         () => {}
     ).catch(() => {
-        alert("Không truy cập được Camera. Vui lòng cấp quyền!");
+        alert("Không mở được camera. Hãy cấp quyền truy cập camera cho trình duyệt!");
         dongCameraQuet();
     });
 }
@@ -112,80 +124,64 @@ function dongCameraQuet() {
     }
 }
 
-function khoiTaoWebRTC_Android(roomId) {
-    const topic = `trancuong_mame_webrtc_${roomId}`;
+function ketNoiMayChuPeerJS(roomId) {
     const statusBar = document.getElementById("status-bar");
     const statusText = document.getElementById("status-text");
     
-    statusText.innerText = `Đang kết nối phòng: ${roomId}...`;
+    statusText.innerText = `Đang kết nối đến mã phòng: ${roomId}...`;
 
-    peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    if (peer) {
+        peer.destroy();
+    }
+
+    // Khởi tạo đối tượng khách PeerJS
+    peer = new Peer({
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
-    dataChannel = peerConnection.createDataChannel("gamepad_channel");
-    
-    dataChannel.onopen = () => {
-        statusBar.classList.add("connected");
-        statusText.innerHTML = "<span class='status-dot'></span>KẾT NỐI P2 THÀNH CÔNG!";
-    };
-    dataChannel.onclose = () => {
-        statusBar.classList.remove("connected");
-        statusText.innerText = "❌ Mất kết nối.";
-    };
+    peer.on('open', function() {
+        // Thực hiện cuộc gọi kết nối trực tiếp Data Channel đến ID phòng của PC
+        conn = peer.connect(`trancuong_mame_${roomId}`);
 
-    peerConnection.onicecandidate = e => {
-        if (e.candidate) {
-            guiTinHieuBantay(topic, { type: 'candidate', candidate: e.candidate, from: 'Android' });
-        }
-    };
+        conn.on('open', function() {
+            statusBar.classList.add("connected");
+            statusText.innerHTML = "<span class='status-dot'></span>KẾT NỐI TAY CẦM THÀNH CÔNG!";
+        });
 
-    peerConnection.createOffer().then(offer => {
-        return peerConnection.setLocalDescription(offer);
-    }).then(() => {
-        guiTinHieuBantay(topic, { type: 'offer', offer: peerConnection.localDescription, from: 'Android' });
+        conn.on('close', function() {
+            statusBar.classList.remove("connected");
+            statusText.innerText = "❌ Mất kết nối. Vui lòng quét lại.";
+        });
+
+        conn.on('error', function(err) {
+            statusText.innerText = "❌ Lỗi đường truyền mạng.";
+        });
     });
 
-    const sse = new EventSource(`https://pubsub.pubnub.com/v2/subscribe/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/${topic}/0?heartbeat=30`);
-    sse.onmessage = async function(e) {
-        const rawData = JSON.parse(e.data);
-        const msg = rawData.m;
-        if (!msg || msg.from !== 'PC') return;
-
-        if (msg.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.answer));
-        } else if (msg.type === 'candidate') {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
-        }
-    };
-}
-
-async function guiTinHieuBantay(topic, msg) {
-    await fetch(`https://pubsub.pubnub.com/publish/pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/0/${topic}/0`, {
-        method: "POST",
-        body: JSON.stringify(msg)
+    peer.on('error', function(err) {
+        statusText.innerText = "❌ Không tìm thấy phòng PC này.";
     });
 }
 
 function guiLenhPhim(type, key, code) {
-    if (dataChannel && dataChannel.readyState === "open") {
-        dataChannel.send(JSON.stringify({
+    if (conn && conn.open) {
+        conn.send({
             sender: "EmulatorJS_P2",
             type: type,
             key: key,
-            keyCode: parseInt(code)
-        }));
+            code: code
+        });
     }
 }
 
-// XỬ LÝ ĐA ĐIỂM ĐIỀU KHIỂN TAY CẦM PHÍM BẤM
+// HỆ THỐNG XỬ LÝ CẢM ỨNG ĐA ĐIỂM (MULTI-TOUCH)
 const activeButtons = new Set();
 function handleTouch(e) {
     const currentTouches = new Set();
     for (let i = 0; i < e.touches.length; i++) {
         const touch = e.touches[i];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element && (element.classList.contains('dpad-btn') || element.classList.contains('action-btn') || element.classList.contains('sys-btn'))) {
+        if (element && (element.classList.contains('dpad-btn') || element.classList.contains('action-btn') || element.classList.contains('sys-btn') || element.classList.contains('shoulder-btn'))) {
             if (element.getAttribute('data-key')) currentTouches.add(element);
         }
     }

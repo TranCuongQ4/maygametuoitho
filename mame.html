@@ -7,7 +7,6 @@
 <title>Trò Chơi Game Thùng</title>
 
 <style>
-
 html,body{
     margin:0;
     padding:0;
@@ -373,7 +372,7 @@ h1{
 </button>
 
 <button class="btn"
-    onclick="startGame('roms/3wonders.zip')">
+    onclick="startGame('3wonders.zip')">
     ⚜ Three Wonder ⚜
 </button>
 
@@ -495,7 +494,6 @@ h1{
 </div>
 
 <script>
-
 document.addEventListener("contextmenu",e=>{
     e.preventDefault();
 });
@@ -548,7 +546,6 @@ function loadRomFromLink() {
 }
 
 function startGame(romUrl, romName = ""){
-
     document.getElementById("menu-container").style.display="none";
     document.getElementById("game-box").style.display="block";
 
@@ -713,7 +710,6 @@ function dongBangHuongDan(){
 // --- HỆ THỐNG KẾT NỐI NGANG HÀNG PEERJS THAY THẾ HOÀN TOÀN PUBNUB ---
 let peer;
 let qrcodeCreated = false;
-// Tạo mã số phòng ngẫu nhiên gồm 4 chữ số (ví dụ: 4839)
 const roomId = Math.floor(1000 + Math.random() * 9000).toString();
 
 function kichHoatMayChuPC() {
@@ -722,20 +718,16 @@ function kichHoatMayChuPC() {
 
     if (qrcodeCreated) return;
 
-    // Khởi tạo thực thể Peer với mã phòng cố định trancuong_mame_xxxx
     peer = new Peer(`trancuong_mame_${roomId}`, {
         config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
-    // Khi Máy chủ đăng ký ID thành công với hệ thống định tuyến PeerJS công cộng
     peer.on('open', function(id) {
         statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
-        // Vẽ mã QR chứa chuỗi số phòng ngắn gọn
         new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
         qrcodeCreated = true;
     });
 
-    // Khi có tín hiệu kết nối DATA CHANNEL từ máy phụ (taycam.html) nhảy vào
     peer.on('connection', function(conn) {
         conn.on('open', function() {
             statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2!</span>";
@@ -755,7 +747,7 @@ function kichHoatMayChuPC() {
                     targetEl.dispatchEvent(new KeyboardEvent(data.type, {
                         key: data.key,
                         keyCode: data.keyCode,
-                        code: data.key,
+                        code: data.code,
                         bubbles: true,
                         view: window
                     }));
