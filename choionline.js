@@ -25,57 +25,46 @@ const rtcConfig = {
     ]
 };
 
-// BẢNG ÁNH XẠ NÚT BẤM SANG MÃ RETROARCH BUTTON ID TRONG SNES9X
-// 0: Up, 1: Down, 2: Left, 3: Right, 8: A, 9: B, 11: Select, 10: Start
+// BẢNG ÁNH XẠ NÚT BẤM CƠ HỌC (Map phím sang mã Button ID chuẩn của Snes9x)
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
 const KEY_TO_BUTTON_ID = {
-    "ArrowUp": 0, "ArrowDown": 1, "ArrowLeft": 2, "ArrowRight": 3,
-    "z": 8, "x": 9, "Shift": 11, "Enter": 10,
-    "w": 0, "s": 1, "a": 2, "d": 3,
-    "i": 8, "o": 9, "c": 11, "v": 10
+    "ArrowUp": 0, "ArrowDown": 1, "ArrowLeft": 2, "ArrowRight": 3, "z": 8, "x": 9, "Shift": 11, "Enter": 10,
+    "w": 0, "s": 1, "a": 2, "d": 3, "i": 8, "o": 9, "c": 11, "v": 10
 };
 
-// Ép cấu hình số lượng người chơi cho EmulatorJS từ đầu
+// Cấu hình số người chơi tối đa trên hệ thống
 window.EJS_players = 2;
 window.EJS_maxPlayers = 2;
 window.EJS_gamepad = true;
 
+// Hàm kích hoạt cổng thiết bị khi Snes9x bắt đầu nạp
 window.EJS_onGameStart = function() {
-    console.log("🎮 Lõi giả lập bắt đầu chạy - Tiến hành phân tách thiết bị phần cứng ảo Snes9x...");
+    console.log("🎮 Lõi giả lập khởi động. Thiết lập cổng phần cứng Snes9x...");
     if (window.EJS_emulator && window.EJS_emulator.api) {
         try {
             if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
-                // Ép cả 2 cổng nhận diện dạng RETRO_DEVICE_JOYPAD (giá trị 1)
+                // Ép cả 2 cổng nhận diện tay cầm Joypad chuẩn (Giá trị 1 = RETRO_DEVICE_JOYPAD)
                 window.EJS_emulator.api.setControllerPortDevice(0, 1);
                 window.EJS_emulator.api.setControllerPortDevice(1, 1);
-                console.log("✅ Đã ép cấu hình cổng snes9x: Port 0 & Port 1 -> RETRO_DEVICE_JOYPAD");
             }
         } catch (err) {
-            console.log("Lỗi ép cổng thiết bị tầng API:", err);
+            console.log("Lỗi cấu hình API phần cứng:", err);
         }
     }
 };
 
+// Theo dõi kết nối Firebase
 db.ref(".info/connected").on("value", (snapshot) => {
     if (snapshot.val() === false) {
-        console.log("⚠️ Phát hiện mất kết nối mạng hoặc Firebase đang tải lại...");
-        const statusEl = document.getElementById("connection-status");
-        if (statusEl && isOnlineMode) {
-            statusEl.textContent = "⚠️ Mạng chập chờn, đang tự động kết nối lại...";
-            statusEl.style.color = "#ff3366";
-        }
+        console.log("⚠️ Mất kết nối mạng hoặc Firebase đang tải lại...");
     } else {
-        console.log("✅ Kết nối Firebase hoạt động ổn định.");
-        const statusEl = document.getElementById("connection-status");
-        if (statusEl && isOnlineMode && isHost && currentRoomId) {
-            statusEl.textContent = "⌛ Đang đợi bạn vào phòng...";
-            statusEl.style.color = "#ffcc00";
-        }
+        console.log("✅ Kết nối Firebase ổn định.");
     }
 });
 
+// KIỂM TRA ĐƯỜNG DẪN URL (NẾU CÓ PARAM ROOM THÌ LÀ MÁY GUEST)
 window.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('room')) {
@@ -89,38 +78,31 @@ window.addEventListener("DOMContentLoaded", () => {
         const modal = document.getElementById("online-modal");
         if(modal) modal.style.display = "flex";
         
-        const title = document.getElementById("online-title");
-        if(title) title.textContent = "KẾT NỐI CHƠI ONLINE";
-        
         const body = document.getElementById("online-body");
-        if(body) body.innerHTML = `<p style='color:#00ffcc;'>🎮 Đang tham gia phòng: <b>${currentRoomId}</b></p><p id='join-status'>⚡ Đang thiết lập kết nối mạng P2P...</p>`;
+        if(body) body.innerHTML = `<p style='color:#00ffcc;'>🎮 Bạn là <b>Máy 2 (Guest)</b>. Đang kết nối tới Máy 1...</p><p id='join-status'>⌛ Đang đợi Máy 1 gửi tình hình game để kích hoạt...</p>`;
         
+        // Máy 2 vào phòng nhưng CHƯA gọi startGame
         joinOnlineRoom(currentRoomId, gameParam);
     }
 });
 
+// --- CHỨC NĂNG 1: TẠO PHÒNG (DÀNH CHO MÁY 1 - HOST) ---
 function createOnlineRoom() {
     isOnlineMode = true;
     isHost = true;
     myRole = "host";
     pendingCandidates = []; 
     
-    if (peerConnection) {
-        try { peerConnection.close(); } catch(e){}
-    }
+    if (peerConnection) { try { peerConnection.close(); } catch(e){} }
     
+    // Tự động dọn phòng cũ
     const now = Date.now();
-    const twelveHours = 12 * 60 * 60 * 1000; 
-    
     db.ref("rooms").once("value", (snapshot) => {
         const rooms = snapshot.val();
         if (rooms) {
-            Object.keys(rooms).forEach(roomId => {
-                const room = rooms[roomId];
-                if (!room.createdAt || (now - room.createdAt) > twelveHours) {
-                    db.ref("rooms/" + roomId).remove()
-                        .then(() => console.log(`🗑️ Đã xóa dọn dẹp phòng cũ tránh tràn Firebase: ${roomId}`))
-                        .catch(e => console.log("Lỗi dọn dẹp:", e));
+            Object.keys(rooms).forEach(id => {
+                if (!rooms[id].createdAt || (now - rooms[id].createdAt) > 12 * 60 * 60 * 1000) {
+                    db.ref("rooms/" + id).remove();
                 }
             });
         }
@@ -140,32 +122,23 @@ function createOnlineRoom() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     });
 
+    // Khi Máy 2 phản hồi kết nối mạng thành công
     roomRef.child("answer").on("value", async (snapshot) => {
         const answer = snapshot.val();
         if (answer && peerConnection && peerConnection.signalingState === "have-local-offer") {
             try {
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-                console.log("🟢 Đồng bộ mạng P2P thành công!");
-                
-                const statusEl = document.getElementById("connection-status");
-                if (statusEl) {
-                    statusEl.textContent = "🟢 Đã kết nối bạn chơi! Trận đấu bắt đầu...";
-                    statusEl.style.color = "#00ffcc";
-                }
-                
+                console.log("🟢 Kết nối P2P thành công!");
                 processPendingCandidates();
 
+                // Máy 1 load game trước để chạy nền
                 const emulatorEl = document.querySelector("#emulator");
                 if (!emulatorEl || emulatorEl.innerHTML === "") {
-                    setTimeout(() => {
-                        if (typeof closeOnlineModal === "function") closeOnlineModal();
-                        startGame(currentSelectedRomUrl, currentSelectedRomName);
-                    }, 1000);
-                } else {
                     if (typeof closeOnlineModal === "function") closeOnlineModal();
+                    startGame(currentSelectedRomUrl, currentSelectedRomName);
                 }
             } catch(err) {
-                console.log("Lỗi cấu hình bắt tay mạng:", err);
+                console.log("Lỗi bắt tay mạng máy Host:", err);
             }
         }
     });
@@ -173,11 +146,8 @@ function createOnlineRoom() {
     roomRef.child("guestCandidates").on("child_added", (snapshot) => {
         const candidate = snapshot.val();
         if (candidate && peerConnection) {
-            if (!peerConnection.remoteDescription) {
-                pendingCandidates.push(candidate);
-            } else {
-                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
-            }
+            if (!peerConnection.remoteDescription) { pendingCandidates.push(candidate); } 
+            else { peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {}); }
         }
     });
 
@@ -196,23 +166,21 @@ function processPendingCandidates() {
 function copyRoomLink() {
     const copyText = document.getElementById("room-link-input");
     copyText.select();
-    copyText.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(copyText.value);
-    alert("Đã copy link phòng! Hãy gửi link này cho bạn chơi qua Zalo nhé.");
+    alert("Đã sao chép link phòng!");
 }
 
+// --- CHỨC NĂNG 2: THAM GIA PHÒNG (DÀNH CHO MÁY 2 - GUEST) ---
 async function joinOnlineRoom(roomId, gameUrl) {
     const roomRef = db.ref("rooms/" + roomId);
     pendingCandidates = []; 
     
-    if (peerConnection) {
-        try { peerConnection.close(); } catch(e){}
-    }
+    if (peerConnection) { try { peerConnection.close(); } catch(e){} }
     
     roomRef.once("value", async (snapshot) => {
         const roomData = snapshot.val();
         if (!roomData) {
-            alert("Phòng chơi không tồn tại hoặc đã bị hủy do hết hạn!");
+            alert("Phòng chơi không tồn tại!");
             window.location.href = window.location.pathname;
             return;
         }
@@ -236,11 +204,6 @@ async function joinOnlineRoom(roomId, gameUrl) {
 
         const offerSnapshot = await roomRef.child("offer").once("value");
         const offer = offerSnapshot.val();
-        if (!offer) {
-            const joinStatusEl = document.getElementById("join-status");
-            if(joinStatusEl) joinStatusEl.textContent = "❌ Lỗi mạng: Chủ phòng chưa khởi tạo mã bắt tay!";
-            return;
-        }
         
         try {
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
@@ -249,20 +212,16 @@ async function joinOnlineRoom(roomId, gameUrl) {
             
             const answerObj = JSON.parse(JSON.stringify(answer));
             await roomRef.update({ answer: answerObj, status: "connected" });
-
             processPendingCandidates();
         } catch(err) {
-            console.log("Lỗi thiết lập liên kết khách:", err);
+            console.log("Lỗi cấu hình mạng Máy 2:", err);
         }
 
         roomRef.child("hostCandidates").on("child_added", (snapshot) => {
             const candidate = snapshot.val();
             if (candidate && peerConnection) {
-                if (!peerConnection.remoteDescription) {
-                    pendingCandidates.push(candidate);
-                } else {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
-                }
+                if (!peerConnection.remoteDescription) { pendingCandidates.push(candidate); } 
+                else { peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {}); }
             }
         });
     });
@@ -270,7 +229,6 @@ async function joinOnlineRoom(roomId, gameUrl) {
 
 async function setupWebRTC(roomRef) {
     peerConnection = new RTCPeerConnection(rtcConfig);
-    
     dataChannel = peerConnection.createDataChannel("gameControls", { ordered: false }); 
     setupDataChannelEvents();
 
@@ -284,139 +242,127 @@ async function setupWebRTC(roomRef) {
     try {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        
-        const offerObj = JSON.parse(JSON.stringify(offer));
-        await roomRef.update({ offer: offerObj });
+        await roomRef.update({ offer: JSON.parse(JSON.stringify(offer)) });
     } catch(err) {
-        console.log("Lỗi tạo mã khởi tạo mạng:", err);
+        console.log("Lỗi tạo Offer:", err);
     }
 }
 
+// --- CHỨC NĂNG 3: ĐỒNG BỘ DÒNG THỜI GIAN VÀ DỮ LIỆU GAME ĐÚNG NHƯ ANH NGHĨ ---
 function setupDataChannelEvents() {
     dataChannel.onopen = () => {
-        console.log("🚀 Đường truyền WebRTC đã kết nối thành công!");
-        
-        // Chạy bộ bẻ khóa luồng phím
+        console.log("🚀 Kênh P2P thông suốt.");
         setupOnlineKeySync();
 
+        // NẾU LÀ MÁY 1 (HOST): Trích xuất tình hình game hiện tại gửi cho Máy 2 kích hoạt
         if (isHost) {
-            const checkAndSyncState = () => {
+            const syncStateToGuest = () => {
                 if (window.EJS_emulator && window.EJS_emulator.gameManager) {
                     try {
                         window.EJS_emulator.gameManager.getState((stateData) => {
                             if (stateData && dataChannel && dataChannel.readyState === "open") {
                                 const stateArray = Array.from(new Uint8Array(stateData));
                                 dataChannel.send(JSON.stringify({
-                                    type: "sync_current_game_state",
+                                    type: "activate_player_2", // Lệnh kích hoạt máy 2
                                     gameState: stateArray
                                 }));
-                                console.log("⚙️ Đã đồng bộ ảnh chụp dòng thời gian game hiện tại sang máy Khách.");
+                                console.log("⚙️ Đã gửi tình hình game hiện tại để kích hoạt Máy 2.");
                             }
                         });
                     } catch (e) {
-                        console.log("Chưa thể trích xuất Save State, thử lại sau...", e);
+                        setTimeout(syncStateToGuest, 500);
                     }
+                } else {
+                    setTimeout(syncStateToGuest, 500);
                 }
             };
-            setTimeout(checkAndSyncState, 2000); 
-        }
-
-        if (!isHost) {
-            const joinStatusEl = document.getElementById("join-status");
-            if(joinStatusEl) joinStatusEl.textContent = "🟢 Đang nạp lại trạng thái trận đấu...";
-            
-            const emulatorEl = document.querySelector("#emulator");
-            if (!emulatorEl || emulatorEl.innerHTML === "") {
-                setTimeout(() => {
-                    if (typeof closeOnlineModal === "function") closeOnlineModal();
-                    startGame(currentSelectedRomUrl, currentSelectedRomName);
-                }, 1000);
-            } else {
-                if (typeof closeOnlineModal === "function") closeOnlineModal();
-            }
+            setTimeout(syncStateToGuest, 2500); // Chờ game chạy ổn định rồi chụp bộ nhớ gửi đi
         }
     };
     
     dataChannel.onclose = () => {
-        console.log("⚠️ Đường truyền mạng P2P cục bộ bị đóng.");
-        
-        const statusEl = document.getElementById("connection-status");
-        if (statusEl) {
-            statusEl.textContent = "⚠️ Bạn chơi đã mất kết nối. Bạn vẫn có thể chơi tiếp một mình!";
-            statusEl.style.color = "#ff9900";
-        }
-
-        if (!isHost && isOnlineMode && currentRoomId) {
-            setTimeout(() => {
-                joinOnlineRoom(currentRoomId, currentSelectedRomUrl);
-            }, 3000);
-        }
-        
-        if (isHost && currentRoomId) {
-            const roomRef = db.ref("rooms/" + currentRoomId);
-            roomRef.child("answer").remove();
-            roomRef.child("guestCandidates").remove();
-            roomRef.child("hostCandidates").remove();
-            
-            setTimeout(() => {
-                setupWebRTC(roomRef);
-            }, 2000);
-        }
+        console.log("⚠️ Mất kết nối bạn chơi.");
     };
 
+    // LUỒNG NHẬN VÀ XỬ LÝ LỆNH TỪ ĐỐI THỦ
     dataChannel.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         
-        if (msg.type === "gamepad_input") {
-            executeDirectGamepadInput(msg.player, msg.button, msg.value);
-        }
-        
-        if (msg.type === "sync_current_game_state" && !isHost) {
-            const tryLoadState = () => {
+        // LÀ MÁY 2 (GUEST): Nhận lệnh kích hoạt kèm dữ liệu bộ nhớ từ Máy 1
+        if (msg.type === "activate_player_2" && !isHost) {
+            console.log("✅ Đã nhận được tình hình game từ Máy 1. Kích hoạt Máy 2...");
+            if (typeof closeOnlineModal === "function") closeOnlineModal();
+            
+            // Bước 1: Máy 2 khởi động game muộn
+            startGame(currentSelectedRomUrl, currentSelectedRomName);
+            
+            // Bước 2: Ép dữ liệu bộ nhớ trùng khớp hoàn toàn với máy 1
+            const forceLoadState = () => {
                 if (window.EJS_emulator && window.EJS_emulator.gameManager) {
                     try {
                         const u8Array = new Uint8Array(msg.gameState);
                         window.EJS_emulator.gameManager.loadState(u8Array);
-                        console.log("✅ Đã kéo dòng thời gian game khớp 100% với chủ phòng!");
+                        console.log("⚡ Máy 2 đã đồng bộ dòng thời gian game khớp 100% với Máy 1!");
                     } catch(err) {
-                        setTimeout(tryLoadState, 500);
+                        setTimeout(forceLoadState, 200);
                     }
                 } else {
-                    setTimeout(tryLoadState, 500);
+                    setTimeout(forceLoadState, 200);
                 }
             };
-            setTimeout(tryLoadState, 1500);
+            setTimeout(forceLoadState, 1500);
+        }
+
+        // LÀ MÁY 1 (HOST): Nhận lệnh bấm nút từ Máy 2 gửi tới và ép vào cổng Player 2
+        if (msg.type === "guest_keypress" && isHost) {
+            executeDirectGamepadInput(2, msg.button, msg.value);
+        }
+        
+        // MÁY 2 (GUEST): Nhận cập nhật trạng thái game liên tục từ máy 1 để chống lệch hình
+        if (msg.type === "live_sync_state" && !isHost) {
+            if (window.EJS_emulator && window.EJS_emulator.gameManager) {
+                try {
+                    window.EJS_emulator.gameManager.loadState(new Uint8Array(msg.gameState));
+                } catch(e){}
+            }
         }
     };
 }
 
-// --- CHỨC NĂNG 4: BỘ ĐÁNH CHẶN VÀ VÔ HIỆU HÓA HOÀN TOÀN TRÌNH QUẢN LÝ PHÍM MẶC ĐỊNH ---
+// --- CHỨC NĂNG 4: BỘ ĐÁNH CHẶN VÀ CHUYỂN HƯỚNG TÍN HIỆU PHÍM ---
 function setupOnlineKeySync() {
     if (!isOnlineMode) return;
-    console.log("⌨️ Khởi động luồng bẻ khóa sâu hệ thống phím...");
 
-    // VÒNG LẶP LIÊN TỤC: Đợi đến khi EmulatorJS thực sự gán hàm xử lý của nó thì gỡ bỏ ngay lập tức
-    const overrideInterval = setInterval(() => {
+    // Vô hiệu hóa và chặn đứng bộ đọc phím mặc định của EmulatorJS trên cả 2 máy
+    const cleanInterval = setInterval(() => {
         if (window.EJS_emulator && window.EJS_emulator.gameManager && window.EJS_emulator.gameManager.handleKeyDown) {
-            try {
-                window.removeEventListener("keydown", window.EJS_emulator.gameManager.handleKeyDown);
-                window.removeEventListener("keyup", window.EJS_emulator.gameManager.handleKeyUp);
-                
-                // Ghi đè rỗng luôn hàm nội bộ của nó để loại bỏ tận gốc cơ chế tự nhận phím
-                window.EJS_emulator.gameManager.handleKeyDown = function(e) { e.preventDefault(); };
-                window.EJS_emulator.gameManager.handleKeyUp = function(e) { e.preventDefault(); };
-                
-                clearInterval(overrideInterval);
-                console.log("🔥 Đã vô hiệu hóa thành công bộ điều khiển phím gốc của EmulatorJS!");
-            } catch (e) {
-                console.log("Đang thử lại việc gỡ bộ lắng nghe phím...", e);
-            }
+            window.removeEventListener("keydown", window.EJS_emulator.gameManager.handleKeyDown);
+            window.removeEventListener("keyup", window.EJS_emulator.gameManager.handleKeyUp);
+            window.EJS_emulator.gameManager.handleKeyDown = function(e){ e.preventDefault(); };
+            window.EJS_emulator.gameManager.handleKeyUp = function(e){ e.preventDefault(); };
+            clearInterval(cleanInterval);
+            console.log("🔥 Đã khóa cơ chế phím mặc định.");
         }
     }, 100);
 
-    // Đăng ký bộ lắng nghe phím độc lập mới, chặn đứng lan truyền (Capture Mode = true)
     window.addEventListener("keydown", (e) => handleStrictKeyEvent(e, 1), true);
     window.addEventListener("keyup", (e) => handleStrictKeyEvent(e, 0), true);
+
+    // [VÒNG ĐỒNG BỘ LIÊN TỤC] Nếu là Máy 1, cứ mỗi 3 giây chụp ảnh bộ nhớ gửi sang Máy 2 để hai máy không bao giờ bị lệch vị trí
+    if (isHost) {
+        setInterval(() => {
+            if (window.EJS_emulator && window.EJS_emulator.gameManager && dataChannel && dataChannel.readyState === "open") {
+                window.EJS_emulator.gameManager.getState((stateData) => {
+                    if (stateData) {
+                        dataChannel.send(JSON.stringify({
+                            type: "live_sync_state",
+                            gameState: Array.from(new Uint8Array(stateData))
+                        }));
+                    }
+                });
+            }
+        }, 3000);
+    }
 }
 
 function handleStrictKeyEvent(event, value) {
@@ -425,36 +371,26 @@ function handleStrictKeyEvent(event, value) {
     const pressedKey = event.key;
     if (!(pressedKey in KEY_TO_BUTTON_ID)) return;
 
-    // Chặn đứng hoàn toàn không cho trình duyệt đẩy phím text vào Core WASM
     event.preventDefault();
     event.stopPropagation();
 
     const buttonId = KEY_TO_BUTTON_ID[pressedKey];
 
     if (isHost) {
-        // NGƯỜI VÀO ĐẦU (HOST) -> CHỈ NHẬN DI CHUYỂN CHO TAY CẦM 1 (Index = 0)
+        // MÁY 1 (HOST): Phím bấm ăn thẳng vào Player 1 tại máy mình
         if (P1_KEYS.includes(pressedKey)) {
             executeDirectGamepadInput(1, buttonId, value);
-
-            dataChannel.send(JSON.stringify({
-                type: "gamepad_input",
-                player: 1,
-                button: buttonId,
-                value: value
-            }));
         }
     } else {
-        // NGƯỜI VÀO SAU (GUEST) -> BẤM PHÍM DI CHUYỂN MẶC ĐỊNH SẼ ĐIỀU KHIỂN TAY CẦM 2 (Index = 1)
+        // MÁY 2 (GUEST): Người chơi bấm phím (ví dụ dải mũi tên P1_KEYS)
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
             let mappedP2Key = P2_KEYS[keyIndex];
             const p2ButtonId = KEY_TO_BUTTON_ID[mappedP2Key];
 
-            executeDirectGamepadInput(2, p2ButtonId, value);
-
+            // KHÔNG xử lý nội bộ, gửi thẳng lệnh bấm nút này sang Máy 1 xử lý
             dataChannel.send(JSON.stringify({
-                type: "gamepad_input",
-                player: 2,
+                type: "guest_keypress",
                 button: p2ButtonId,
                 value: value
             }));
@@ -462,22 +398,17 @@ function handleStrictKeyEvent(event, value) {
     }
 }
 
-// Ghi đè trạng thái Tay cầm trực tiếp vào cấu trúc API State nhị phân Libretro của snes9x
+// Hàm ép nút vào lõi C++ của Snes9x
 function executeDirectGamepadInput(targetPlayer, buttonId, value) {
     if (window.EJS_emulator) {
         try {
-            // Định nghĩa chuẩn phần cứng: Player 1 = Cổng 0, Player 2 = Cổng 1
             const playerGamepadIndex = (parseInt(targetPlayer) === 2) ? 1 : 0;
-
-            // Đẩy song song vào cả hai hàm để đảm bảo lõi C++ của snes9x nhận tín hiệu tức thì
             if (window.EJS_emulator.api && typeof window.EJS_emulator.api.setGamepadState === "function") {
                 window.EJS_emulator.api.setGamepadState(playerGamepadIndex, buttonId, value);
             }
             if (window.EJS_emulator.gameManager && typeof window.EJS_emulator.gameManager.simulateInput === "function") {
                 window.EJS_emulator.gameManager.simulateInput(playerGamepadIndex, buttonId, value);
             }
-        } catch(err) {
-            // Core đang tải khung hình, bỏ qua
-        }
+        } catch(err){}
     }
 }
