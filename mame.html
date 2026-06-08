@@ -3,157 +3,669 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Trò Chơi Game Thùng - P2P Receiver</title>
+
+<title>Trò Chơi Game Thùng</title>
+
 <style>
+
 html,body{
-    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
-    background:#121212; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#fff;
+    margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#121212;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    color:#fff;
 }
+
 #menu-container{
-    width:100%; height:100%; box-sizing:border-box; padding:20px;
-    overflow-y:auto; display:flex; flex-direction:column; align-items:center;
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+    padding:20px 20px 40px 20px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
-h1{ color:#ffcc00; font-size:26px; margin-bottom:5px; text-shadow:2px 2px #000; text-align:center; }
-.subtitle{ color:#aaa; font-size:14px; margin-bottom:20px; }
+
+h1{
+    color:#ffcc00;
+    font-size:26px;
+    margin-bottom:5px;
+    text-shadow:2px 2px #000;
+    text-align:center;
+}
+
+.subtitle{
+    color:#aaa;
+    font-size:14px;
+    margin-bottom:20px;
+}
+
 .btn{
-    background:linear-gradient(145deg,#2a2a2a,#222); color:white; border:1px solid #444;
-    padding:14px 20px; margin:6px 0; border-radius:10px; cursor:pointer; font-size:16px;
-    font-weight:bold; width:90%; max-width:340px; box-shadow:0 4px 6px rgba(0,0,0,.3);
-    transition:all .1s ease; text-align:center; -webkit-tap-highlight-color:transparent;
+    background:linear-gradient(145deg,#2a2a2a,#222);
+    color:white;
+    border:1px solid #444;
+    padding:14px 20px;
+    margin:6px 0;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+    font-weight:bold;
+    width:90%;
+    max-width:340px;
+    box-shadow:0 4px 6px rgba(0,0,0,.3);
+    transition:all .1s ease;
+    -webkit-tap-highlight-color:transparent;
+    text-align:center;
 }
-.btn:active{ transform:scale(.98); background:#ffcc00; color:#000; border-color:#fff; }
-.btn-back{ background:linear-gradient(145deg,#0f2b46,#0a1c2e); border:1px solid #00ffcc; color:#00ffcc; }
-.btn-p2p { background: linear-gradient(145deg, #00cc44, #009933); border: 2px solid #fff; color: #fff; }
-#romInput{ display:none; }
-.footer{ color:#ffcc00; font-size:12px; margin-top:25px; text-align:center; }
-#game-box{ width:100%; height:100%; display:none; position:fixed; top:0; left:0; z-index:9999; background:#000; }
-#emulator{ width:100%; height:100%; }
+
+.btn:active{
+    transform:scale(.98);
+    background:#ffcc00;
+    color:#000;
+    border-color:#fff;
+}
+
+.btn-back{
+    background:linear-gradient(145deg,#0f2b46,#0a1c2e);
+    border:1px solid #00ffcc;
+    color:#00ffcc;
+}
+
+.btn-gt{
+    background:linear-gradient(145deg,#0f2b46,#0a1c2e);
+    border:1px solid #00ffcc;
+    color:#00ffcc;
+}
+
+.btn-hd { 
+    background: linear-gradient(145deg, #0f2b46, #0a1c2e); 
+    border: 1px solid #00ffcc; 
+    color: #00ffcc; 
+}
+
+#romInput{
+    display:none;
+}
+
+.footer{
+    color:#ffcc00;
+    font-size:12px;
+    margin-top:25px;
+    text-align:center;
+}
+
+#game-box{
+    width:100%;
+    height:100%;
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:9999;
+    background:#000;
+}
+
+#emulator{
+    width:100%;
+    height:100%;
+}
+
 #custom-close-btn{
-    position:fixed; top:20px; left:20px; z-index:100000; background-color:rgba(255,51,102,.9);
-    color:white; border:2px solid rgba(255,255,255,.5); border-radius:50%; width:50px; height:50px;
-    font-size:24px; font-weight:bold; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; user-select:none; touch-action:none; box-shadow:0 4px 15px rgba(0,0,0,.5);
+    position:fixed;
+    top:20px;
+    left:20px;
+    z-index:100000;
+    background-color:rgba(255,51,102,.9);
+    color:white;
+    border:2px solid rgba(255,255,255,.5);
+    border-radius:50%;
+    width:50px;
+    height:50px;
+    font-size:24px;
+    font-weight:bold;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    user-select:none;
+    touch-action:none;
+    box-shadow:0 4px 15px rgba(0,0,0,.5);
 }
-#p2p-status {
-    background: rgba(0, 0, 0, 0.6); padding: 10px; border-radius: 8px; color: #ffcc00;
-    font-size: 13px; margin-bottom: 15px; border: 1px dashed #ffcc00; width: 85%; max-width: 320px; text-align: center;
+
+.rotate-hint{
+    color:#ff3366;
+    font-size:13px;
+    margin-bottom:15px;
+    font-weight:bold;
 }
+
+#guide-modal {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background-color:rgba(0,0,0,.85);
+    z-index:100050;
+    justify-content:center;
+    align-items:center;
+    box-sizing:border-box;
+    padding:20px;
+}
+
+.modal-content{
+    background:linear-gradient(145deg,#1e1e1e,#161616);
+    border:2px solid #00ffcc;
+    border-radius:16px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 0 25px rgba(0,255,204,.3);
+    padding:22px;
+    box-sizing:border-box;
+}
+
+.modal-title{
+    color:#ffcc00;
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:18px;
+    text-align:center;
+}
+
+.modal-body{
+    font-size:14px;
+    line-height:1.6;
+    color:#e0e0e0;
+    margin-bottom:22px;
+}
+
+.modal-item{
+    margin-bottom:10px;
+}
+
+.modal-btn{
+    background:linear-gradient(145deg,#00ffcc,#00ccaa);
+    color:#000;
+    border:none;
+    padding:12px;
+    font-size:15px;
+    font-weight:bold;
+    border-radius:8px;
+    cursor:pointer;
+    width:100%;
+}
+
+.section-title {
+    color:#ffcc00;
+    font-size:18px;
+    margin:15px 0 10px 0;
+    text-align:center;
+    border-top:1px solid #444;
+    padding-top:15px;
+    width:90%;
+}
+
 </style>
 </head>
 <body>
 
 <div id="menu-container">
-    <h1>🕹️ GAME THÙNG SIÊU TỐC 🕹️</h1>
-    <div class="subtitle">Kết Nối Trực Tiếp Không Độ Trễ</div>
 
-    <div id="p2p-status">Trạng thái kết nối: Sẵn sàng vận hành</div>
-    
-    <button class="btn btn-p2p" onclick="setupP2PConnection()">🎮 KÍCH HOẠT VẬN HÀNH TAY CẦM PHỤ 🎮</button>
-    <button class="btn btn-back" onclick="window.location.href='index.html'">← Trở Về Game Băng Đĩa</button>
+    <h1>🕹️ GAME THÙNG 🕹️</h1>
 
-    <button class="btn" onclick="askPlayMode('roms/dino.zip')">⚜ Trò Bộ Đội Nổi Tiếng ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/knights.zip')">⚜ Knights of the Round ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/wof.zip')">⚜ Tam Quốc Chí 2 ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/sf2.zip')">⚜ Street Fighter II ⚜</button>
+    <div class="subtitle">
+        Trò Chơi Ngày Xưa
+    </div>
 
-    <div class="footer">Thiết Kế Trần Cường - Zalo: 0907860662</div>
+    <div class="rotate-hint">
+        🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!
+    </div>
+
+    <button class="btn btn-back"
+        onclick="window.location.href='index.html'">
+        ← Trở Về Game Băng Đĩa
+    </button>
+
+    <button class="btn"
+        onclick="loadDino()">
+        ⚜ Trò Bộ Đội Nổi Tiếng ⚜
+    </button>
+	
+	<button class="btn"
+    onclick="startGame('roms/knights.zip')">
+    ⚜ Knights of the Round ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/1941.zip')">
+    ⚜ 1941: COUNTER ATTACK ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/1942.zip')">
+    ⚜ 1942 ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/dynwar.zip')">
+    ⚜ Tam Quốc Chí 1 ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/wof.zip')">
+    ⚜ Tam Quốc Chí 2 ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/ffight.zip')">
+    ⚜ Anh Hùng Đường Phố ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/mercs.zip')">
+    ⚜ Rambo Mecrs ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/sf2.zip')">
+    ⚜ Street Fighter II ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/contra.zip')">
+    ⚜ Contra ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/64street.zip')">
+    ⚜ 64 Street ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/batsugun.zip')">
+    ⚜ Bắn Máy Bay Batsugun ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/ssriders.zip')">
+    ⚜ Cao Bồi Viễn Tây ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/tmnt.zip')">
+    ⚜ Ningia Rùa ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/3wonders.zip')">
+    ⚜ Three Wonder ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('megaman.zip')">
+    ⚜ Mega Man ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/robocop2.zip')">
+    ⚜ Robocop 2 ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/gunforc2.zip')">
+    ⚜ Gun Force II ⚜
+</button>
+
+<button class="btn"
+    onclick="startGame('roms/punisher.zip')">
+    ⚜ Kẻ Trừng Phạt ⚜
+</button>
+
+<div class="section-title">☛ Game Thùng Siêu Thị ☚</div>
+
+<button class="btn btn-gt" onclick="window.location.href='https://trancuongq4.github.io/neogeosieuthi/'">🕹️ Neo Geo Pro 🕹️</button>
+	
+<div class="section-title">⚙️ Tiện ích ⚙️</div>
+
+<button class="btn" onclick="openRomSource()">
+    🌐 Tải ROM Từ Kho Game 🌐
+</button>
+
+<label for="romInput" class="btn" style="text-align:center;display:block;box-sizing:border-box;margin:6px auto;">
+    📁 Nạp File Rom Từ Máy 📁
+</label>
+
+<input type="file" id="romInput" accept=".zip,.7z">
+
+<button class="btn" onclick="loadRomFromLink()" style="background: linear-gradient(145deg, #1a3a2a, #0a241a); border: 2px solid #66ff99; color: #66ff99;">
+    🔗 Load Game Từ Link Web 🔗
+</button>
+		
+<button class="btn btn-hd" onclick="moBangHuongDan()">
+    📖 Hướng Dẫn Sử Dụng 📖
+</button>
+
+    <div class="footer">
+        Thiết Kế Trần Cường - Zalo: 0907860662
+    </div>
+
 </div>
 
 <div id="game-box">
+
     <div id="custom-close-btn">✕</div>
-    <div id="emulator-container" style="width:100%;height:100%;">
+
+    <div id="emulator-container"
+        style="width:100%;height:100%;">
         <div id="emulator"></div>
     </div>
+
+</div>
+
+<div id="guide-modal">
+
+    <div class="modal-content">
+
+        <div class="modal-title">
+            📖 HƯỚNG DẪN SỬ DỤNG
+        </div>
+
+        <div class="modal-body">
+
+            <div class="modal-item">
+                ✅ Nhấn <b>🦖 Bộ Đội</b> để vào chơi ngay game Cadillacs and Dinosaurs , tương tự các game khác.
+            </div>
+
+            <div class="modal-item">
+                ✅ Nhấn <b>🌐 Tải ROM Từ Kho Game Thùng</b> để mở kho ROM MAME 0.78 trong tab mới và tải game yêu thích về máy , hoặc copy link game đó để dán vào Load Game Từ Link nhé.
+            </div>
+
+            <div class="modal-item">
+                ✅ Sau khi tải ROM xong, dùng <b>📁 Tự Nạp File Rom Từ Máy</b> để chọn file ZIP vừa tải và chơi ngay.
+            </div>
+
+            <div class="modal-item">
+                ✅ Dùng nút <b>🔗 Load Game Từ Link Web</b> để nạp link trực tiếp từ internet (như link archive.org).
+            </div>
+
+            <div class="modal-item">
+                ✅ <b>Nút X màu đỏ</b> dùng để thoát game. Có thể kéo thả tới vị trí khác nếu che mất nút điều khiển.
+            </div>
+
+            <div class="modal-item">
+                ✅ Nên bật <b>Xoay ngang màn hình</b> để có trải nghiệm game thùng tốt nhất.
+            </div>
+			
+			<div class="modal-item">
+                ✅ Khi Vào Game<b> Chú Ý:</b> nút Select là để nạp thẻ chơi ( phải nạp mới chơi được) , nút Star để chơi.
+            </div>
+			
+			<div class="modal-item">
+                ✅ Chế độ GAME<b> Nút 3 gạch ngang góc phải trên</b> có rất nhiều như restart lưu hay open game các nút bấm v...v...
+            </div>
+			
+			<div class="modal-item">
+                ✅ Trần Cường<b> Zalo: </b>0907860662
+            </div>
+
+        </div>
+
+        <button class="modal-btn" onclick="dongBangHuongDan()">
+            ĐÃ HIỂU
+        </button>
+
+    </div>
+
 </div>
 
 <script>
-let isLoaderScriptLoaded = false;
-let peerConnection = null;
-let dataChannel = null;
 
-// Khởi tạo cấu hình ICE Server mặc định của Google để tự tìm địa chỉ IP kết nối trực tiếp 2 máy
-const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+document.addEventListener("contextmenu",e=>{
+    e.preventDefault();
+});
 
-function setupP2PConnection() {
-    const statusDiv = document.getElementById("p2p-status");
-    peerConnection = new RTCPeerConnection(rtcConfig);
-    
-    // Tạo kênh truyền dữ liệu siêu tốc độ dữ liệu thô (Dùng UDP)
-    dataChannel = peerConnection.createDataChannel("gamepadChannel", { ordered: false, maxRetransmits: 0 });
-    
-    dataChannel.onopen = () => { statusDiv.innerHTML = "🟢 <b>ĐÃ KẾT NỐI TAY CẦM TRỰC TIẾP!</b>"; };
-    dataChannel.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if(data && window.EJS_emulator && window.EJS_emulator.api) {
-            try {
-                // Nhồi trực tiếp phím từ Máy 2 vào core EmulatorJS P2 lập tức
-                window.EJS_emulator.api.setGamepadState(1, data.btn, data.val);
-            } catch(e){}
-        }
-    };
+document.addEventListener("selectstart",e=>{
+    e.preventDefault();
+});
 
-    peerConnection.onicecandidate = (e) => {
-        if (e.candidate == null) {
-            // Sau khi gom đủ mã cấu hình định danh, hiển thị mã để nhập sang máy tay cầm
-            const offerB64 = btoa(JSON.stringify(peerConnection.localDescription));
-            let shortCode = offerB64.substring(offerB64.length - 12, offerB64.length - 4).toUpperCase();
-            prompt("HÃY SAO CHÉP MÃ SỐ KẾT NỐI NÀY VÀ NHẬP VÀO MÁY TAY CẦM PHỤ:", shortCode);
-            statusDiv.innerText = "Chờ máy phụ nhập mã để thông kết nối...";
-        }
-    };
+let isLoaderScriptLoaded=false;
 
-    peerConnection.createOffer().then(offer => peerConnection.setLocalDescription(offer));
+function openRomSource(){
+    window.open(
+        "https://archive.org/download/trancuong",
+        "_blank"
+    );
 }
 
-function askPlayMode(romUrl, romName = "") {
-    startGame(romUrl, romName);
+function loadDino(){
+    startGame("roms/dino.zip");
+}
+
+// LẮNG NGHE CHỌN FILE TỪ MÁY
+document
+.getElementById("romInput")
+.addEventListener("change",function(e){
+    const file=e.target.files[0];
+    if(!file) return;
+
+    startGame(URL.createObjectURL(file), file.name);
+});
+
+// HÀM XỬ LÝ NẠP FILE TỪ LINK WEB & ÉP CORS BYPASS
+function loadRomFromLink() {
+    let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "Link bên chổ trang web mở ra đó , bạn dán Link game nào chơi vào đây");
+    
+    // Nếu người dùng nhấn Cancel (No) hoặc không nhập gì thì dừng lại, trở lại giao diện cũ
+    if (!urlInput) return;
+    
+    let trimmedUrl = urlInput.trim();
+    if (trimmedUrl === "") return;
+
+    // GIẢI PHÁP SỬA LỖI CORS: Nếu phát hiện là link archive.org/download/, chuyển sang cấu trúc archive.org/cors/
+    if(trimmedUrl.includes("archive.org/download/")) {
+        trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
+    }
+
+    // Tự động bóc tách tên file từ đuôi link để lấy Game ID định danh cấu trúc
+    let detectedName = "";
+    try {
+        const parts = trimmedUrl.split('/');
+        detectedName = parts[parts.length - 1]; 
+    } catch(e) {
+        detectedName = "customrom.zip";
+    }
+
+    startGame(trimmedUrl, detectedName);
 }
 
 function startGame(romUrl, romName = ""){
+
     document.getElementById("menu-container").style.display="none";
     document.getElementById("game-box").style.display="block";
-    const container = document.getElementById("emulator-container");
-    container.innerHTML = '<div id="emulator"></div>';
 
-    window.EJS_player = "#emulator";
-    window.EJS_core = "arcade";
-    window.EJS_gameUrl = romUrl;
-    if(romName !== "") window.EJS_gameName = romName;
+    const container=
+    document.getElementById("emulator-container");
 
-    window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
-    window.EJS_corePath = "https://cdn.emulatorjs.org/stable/data/cores/";
-    window.EJS_language = "en";
-    window.EJS_startOnLoaded = true;
-    window.EJS_players = 2;
-    window.EJS_maxPlayers = 2;
-    window.EJS_gamepad = true;
+    container.innerHTML=
+    '<div id="emulator"></div>';
 
-    window.EJS_onGameStart = function() {
-        if (window.EJS_emulator && window.EJS_emulator.api) {
-            try {
-                if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
-                    window.EJS_emulator.api.setControllerPortDevice(0, 1);
-                    window.EJS_emulator.api.setControllerPortDevice(1, 1);
-                }
-            } catch (err){}
-        }
-    };
+    window.EJS_player="#emulator";
+
+    window.EJS_core="arcade";
+
+    window.EJS_gameUrl=romUrl;
+
+    // Nếu có tên file, gán vào EJS_gameName để ép định danh lõi MAME xử lý mảng zip bộ nhớ
+    if(romName !== "") {
+        window.EJS_gameName = romName;
+    } else {
+        delete window.EJS_gameName;
+    }
+
+    window.EJS_pathtodata=
+    "https://cdn.emulatorjs.org/stable/data/";
+
+    window.EJS_corePath=
+    "https://cdn.emulatorjs.org/stable/data/cores/";
+	
+	window.EJS_language = "en";
+
+    window.EJS_startOnLoaded=true;
+
+    window.dispatchEvent(new Event("resize"));
 
     if(!isLoaderScriptLoaded){
-        const script = document.createElement("script");
-        script.src = "https://cdn.emulatorjs.org/stable/data/loader.js";
-        script.onload = function(){ isLoaderScriptLoaded = true; };
+
+        const script=
+        document.createElement("script");
+
+        script.src=
+        "https://cdn.emulatorjs.org/stable/data/loader.js";
+
+        script.onload=function(){
+            isLoaderScriptLoaded=true;
+        };
+
         document.head.appendChild(script);
-    } else {
-        if(typeof EJS_Emulator === "function"){
-            new EJS_Emulator(document.getElementById("emulator"), window);
-        } else {
+
+    }else{
+
+        if(typeof EJS_Emulator==="function"){
+
+            new EJS_Emulator(
+                document.getElementById("emulator"),
+                window
+            );
+
+        }else{
+
             window.location.reload();
+
         }
     }
 }
 
-function forceCloseGame(){ window.location.reload(); }
+function forceCloseGame(){
+    window.location.reload();
+}
+
+function makeDraggable(element){
+
+    let isDragging = false;
+    let startX, startY;
+    let startLeft, startTop;
+    let hasMoved = false;
+
+    /* TOUCH */
+
+    element.addEventListener("touchstart",(e)=>{
+        isDragging = true;
+        hasMoved = false;
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        const rect = element.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+    },{passive:true});
+
+    element.addEventListener("touchmove",(e)=>{
+        if(!isDragging) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
+            hasMoved = true;
+        }
+
+        if(hasMoved){
+            if(e.cancelable){
+                e.preventDefault();
+            }
+            let newLeft = startLeft + dx;
+            let newTop  = startTop + dy;
+
+            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
+            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
+
+            element.style.left = newLeft + "px";
+            element.style.top  = newTop + "px";
+        }
+    },{passive:false});
+
+    element.addEventListener("touchend",()=>{
+        if(!isDragging) return;
+        isDragging = false;
+        if(!hasMoved){
+            forceCloseGame();
+        }
+    });
+
+    element.addEventListener("touchcancel",()=>{
+        isDragging = false;
+    });
+
+    /* MOUSE */
+
+    element.addEventListener("mousedown",(e)=>{
+        e.preventDefault();
+        isDragging = true;
+        hasMoved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = element.getBoundingClientRect();
+        startLeft = rect.left;
+        startTop = rect.top;
+    });
+
+    window.addEventListener("mousemove",(e)=>{
+        if(!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
+            hasMoved = true;
+        }
+
+        let newLeft = startLeft + dx;
+        let newTop  = startTop + dy;
+
+        newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
+        newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
+
+        element.style.left = newLeft + "px";
+        element.style.top  = newTop + "px";
+    });
+
+    window.addEventListener("mouseup",()=>{
+        isDragging = false;
+    });
+}
+
+const closeBtn=
+document.getElementById("custom-close-btn");
+
+makeDraggable(closeBtn);
+
+closeBtn.addEventListener("click",()=>{
+    forceCloseGame();
+});
+
+function moBangHuongDan(){
+    document.getElementById("guide-modal").style.display="flex";
+}
+
+function dongBangHuongDan(){
+    document.getElementById("guide-modal").style.display="none";
+}
+
 </script>
+
 </body>
 </html>
