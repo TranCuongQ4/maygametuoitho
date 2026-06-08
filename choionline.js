@@ -27,44 +27,22 @@ const rtcConfig = {
     ]
 };
 
-// Mảng bảng phím mặc định của EmulatorJS dành cho Player 1 và Player 2 để chúng ta map tín hiệu mạng
+// BẢNG ÁNH XẠ NÚT BẤM (MAP PHÍM SANG MÃ RETROARCH BUTTON ID)
+// 0: Up, 1: Down, 2: Left, 3: Right, 8: A, 9: B, 11: Select(Coin), 10: Start
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
-// --- [QUAN TRỌNG] CẤU HÌNH ÉP LÕI GIẢ LẬP PHÂN CHIA TAY CẦM 1 VÀ 2 TỪ ĐẦU ---
-// Điền cấu hình này vào window trước khi gọi startGame để EmulatorJS không tự map đè phím lung tung
-window.EJS_players = 2;
-window.EJS_gamePadIndex = 0; 
-window.EJS_player = "#emulator";
-
-// Hàm bổ sung cấu hình RetroArch để tách biệt hoàn toàn Player 2 ra khỏi các phím mặc định của Player 1
-window.EJS_onGameStart = function() {
-    console.log("🎮 Lõi giả lập bắt đầu chạy - Tiến hành cấu hình phân rã Player 1 & 2...");
-    if (window.EJS_emulator && window.EJS_emulator.api) {
-        // Ép hệ thống nhận diện rõ ràng 2 tay cầm riêng biệt
-        try {
-            // Thiết lập dải phím cho Player 1 (Mũi tên, Z, X, Shift, Enter)
-            const p1Mapping = {
-                "up": "ArrowUp", "down": "ArrowDown", "left": "ArrowLeft", "right": "ArrowRight",
-                "a": "z", "b": "x", "select": "Shift", "start": "Enter"
-            };
-            // Thiết lập dải phím cho Player 2 (W, A, S, D, I, O, C, V)
-            const p2Mapping = {
-                "up": "w", "down": "s", "left": "a", "right": "d",
-                "a": "i", "b": "o", "select": "c", "start": "v"
-            };
-
-            // Thực thi cấu hình ép trực tiếp vào Core
-            if(typeof window.EJS_emulator.setControls === "function") {
-                window.EJS_emulator.setControls(1, p1Mapping);
-                window.EJS_emulator.setControls(2, p2Mapping);
-                console.log("✅ Đã phân chia bản đồ phím cứng Player 1 & Player 2 trong lõi hệ thống.");
-            }
-        } catch(e) {
-            console.log("Lỗi cấu hình thiết lập tay cầm đầu vào:", e);
-        }
-    }
+const KEY_TO_BUTTON_ID = {
+    // Player 1
+    "ArrowUp": 0, "ArrowDown": 1, "ArrowLeft": 2, "ArrowRight": 3,
+    "z": 8, "x": 9, "Shift": 11, "Enter": 10,
+    // Player 2
+    "w": 0, "s": 1, "a": 2, "d": 3,
+    "i": 8, "o": 9, "c": 11, "v": 10
 };
+
+// --- ÉP CẤU HÌNH ĐẦU VÀO ĐỂ EMULATORJS KHÔNG ĐÈ PHÍM CŨ ---
+window.EJS_players = 2;
 
 // --- THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI CỦA FIREBASE ---
 db.ref(".info/connected").on("value", (snapshot) => {
@@ -346,7 +324,7 @@ function setupDataChannelEvents() {
                     }
                 }
             };
-            setTimeout(checkAndSyncState, 2000); // Tăng lên 2 giây để đảm bảo lõi đồ họa đã chạy thông suốt hẳn
+            setTimeout(checkAndSyncState, 2000); 
         }
 
         if (!isHost) {
@@ -398,8 +376,9 @@ function setupDataChannelEvents() {
     dataChannel.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         
-        if (msg.type === "keyup" || msg.type === "keydown") {
-            simulateEmulatorKeyEvent(msg.type, msg.key, msg.player);
+        // 1. Nhận lệnh mô phỏng Tay cầm nhị phân từ mạng gửi sang
+        if (msg.type === "gamepad_input") {
+            executeDirectGamepadInput(msg.player, msg.button, msg.value);
         }
         
         if (msg.type === "sync_current_game_state" && !isHost) {
@@ -422,88 +401,84 @@ function setupDataChannelEvents() {
     };
 }
 
-// --- CHỨC NĂNG 4: BỘ ĐIỀU PHỐI ĐÁNH CHẶN VÀ ĐỒNG BỘ PHÍM BÀN PHÍM ---
+// --- CHỨC NĂNG 4: ĐÁNH CHẶN VÀ ĐỔI HOÀN TOÀN SANG TÍN HIỆU TAY CẦM ẢO ---
 function setupOnlineKeySync() {
     if (!isOnlineMode) return;
-    console.log("⌨️ Hệ thống đánh chặn phân rã luồng Player đã chạy.");
+    console.log("⌨️ Hệ thống chuyển đổi luồng Tay Cầm Độc Lập v2 đã chạy.");
 
-    // ÉP LẠI BIẾN TOÀN CỤC ĐỂ ĐẢM BẢO CHẠY ĐÚNG 2 CỔNG TAY CẦM độc lập
-    window.EJS_players = 2; 
+    // Chặn triệt để cơ chế xử lý Keyboard mặc định của EmulatorJS để loại bỏ lỗi dính nút P1
+    if (window.EJS_emulator && window.EJS_emulator.gameManager) {
+        // Vô hiệu hóa bộ lắng nghe phím mặc định của nó
+        window.removeEventListener("keydown", window.EJS_emulator.gameManager.handleKeyDown);
+        window.removeEventListener("keyup", window.EJS_emulator.gameManager.handleKeyUp);
+    }
 
-    window.addEventListener("keydown", (e) => handleKeyEvent(e, "keydown"), true);
-    window.addEventListener("keyup", (e) => handleKeyEvent(e, "keyup"), true);
+    // Tự bắt sự kiện bằng Capture Mode ưu tiên cao nhất
+    window.addEventListener("keydown", (e) => handleStrictKeyEvent(e, 1), true);
+    window.addEventListener("keyup", (e) => handleStrictKeyEvent(e, 0), true);
 }
 
-function handleKeyEvent(event, type) {
+function handleStrictKeyEvent(event, value) {
     if (!isOnlineMode || !dataChannel || dataChannel.readyState !== "open") return;
 
     const pressedKey = event.key;
+    
+    // Nếu phím bấm không nằm trong danh sách điều khiển thì bỏ qua cho nhập liệu bình thường
+    if (!(pressedKey in KEY_TO_BUTTON_ID)) return;
+
+    // Chặn đứng hoàn toàn không cho trình duyệt tạo ra sự kiện phím lan vào lõi
+    event.preventDefault();
+    event.stopPropagation();
+
+    const buttonId = KEY_TO_BUTTON_ID[pressedKey];
 
     if (isHost) {
-        // Nếu là Host (Player 1) -> Chặn tuyệt đối dải phím P2 không cho đè lên cấu hình máy mình
-        if (P2_KEYS.includes(pressedKey.toLowerCase())) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-        }
-        
-        // Nếu Host bấm đúng phím Player 1 -> Chạy nội bộ cổng 1 và đồng bộ sang khách
+        // Máy Host chỉ xử lý tập phím của Player 1 (Mũi tên, Z, X...)
         if (P1_KEYS.includes(pressedKey)) {
+            // Chạy trực tiếp trên Tay cầm 1 (Index = 0) của máy mình
+            executeDirectGamepadInput(1, buttonId, value);
+
+            // Bắn lệnh tay cầm qua mạng sang cho máy Khách cùng hiển thị chuyển động
             dataChannel.send(JSON.stringify({
-                type: type,
-                key: pressedKey,
-                player: 1
+                type: "gamepad_input",
+                player: 1,
+                button: buttonId,
+                value: value
             }));
-            simulateEmulatorKeyEvent(type, pressedKey, 1);
-            event.preventDefault();
-            event.stopPropagation();
         }
     } else {
-        // Nếu mình là Khách (Player 2)
+        // Máy Khách (Guest) bấm dải phím Mũi tên (P1_KEYS) nhưng được map ra tính năng P2
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // Dùng dải phím P2 tương ứng
             let mappedP2Key = P2_KEYS[keyIndex];
-            
-            // Gửi dữ liệu yêu cầu thực thi trên tay số 2 sang cho Host
+            const p2ButtonId = KEY_TO_BUTTON_ID[mappedP2Key];
+
+            // Chạy trực tiếp trên Tay cầm 2 (Index = 1) của máy Khách
+            executeDirectGamepadInput(2, p2ButtonId, value);
+
+            // Bắn lệnh Tay cầm 2 sang cho máy Host để di chuyển Nhân vật số 2
             dataChannel.send(JSON.stringify({
-                type: type,
-                key: mappedP2Key,
-                player: 2
+                type: "gamepad_input",
+                player: 2,
+                button: p2ButtonId,
+                value: value
             }));
-            
-            simulateEmulatorKeyEvent(type, mappedP2Key, 2);
         }
     }
 }
 
-// Hàm giả lập tiêm phím trực tiếp vào cổng cắm điều khiển của đối tượng xử lý EmulatorJS
-function simulateEmulatorKeyEvent(type, keyName, targetPlayer) {
-    // 1. Giả lập sự kiện mức trình duyệt cho giao diện web ngoài (nếu cần)
-    const e = new KeyboardEvent(type, {
-        key: keyName,
-        bubbles: true,
-        cancelable: true
-    });
-    const emulatorEl = document.querySelector("#emulator");
-    if (emulatorEl) {
-        emulatorEl.dispatchEvent(e);
-    }
-
-    // 2. [CAN THIỆP SÂU VÀO LUỒNG NHỊ PHÂN CỦA CORE] - ÉP BUỘC TÁCH BIỆT CỔNG TAY CẦM ĐỘC LẬP
-    if (window.EJS_emulator && window.EJS_emulator.api && typeof window.EJS_emulator.api.setKeyboardState === "function") {
+// HÀM QUAN TRỌNG NHẤT: Ép tín hiệu trực tiếp vào cổng phần cứng ảo của lõi WASM/RetroArch
+function executeDirectGamepadInput(targetPlayer, buttonId, value) {
+    if (window.EJS_emulator && window.EJS_emulator.gameManager && typeof window.EJS_emulator.gameManager.simulateInput === "function") {
         try {
-            // Trong API C++ gốc của RetroArch: Player 1 = Cổng 0, Player 2 = Cổng 1
-            const playerIndex = (parseInt(targetPlayer) === 2) ? 1 : 0;
-            const isPressed = (type === "keydown");
+            // Trong hàm simulateInput của EmulatorJS: 
+            // Player 1 = Tham số 0, Player 2 = Tham số 1
+            const playerGamepadIndex = (parseInt(targetPlayer) === 2) ? 1 : 0;
             
-            // Hàm thần thánh ép thẳng vào luồng xử lý phần cứng ảo của game
-            window.EJS_emulator.api.setKeyboardState(playerIndex, keyName, isPressed);
+            // Gọi lệnh mô phỏng nút bấm ở tầng nhị phân C++ gốc
+            window.EJS_emulator.gameManager.simulateInput(playerGamepadIndex, buttonId, value);
         } catch(err) {
-            // Core chưa sẵn sàng, bỏ qua tránh crash trang web
+            console.log("Lỗi ép luồng phần cứng Tay cầm:", err);
         }
     }
 }
