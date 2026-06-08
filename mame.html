@@ -709,20 +709,20 @@ function dongBangHuongDan(){
     document.getElementById("guide-modal").style.display="none";
 }
 
-// --- LOGIC XỬ LÝ WEBRTC MÁY CHỦ ---
+// --- LOGIC XỬ LÝ WEBRTC MÁY CHỦ (SỬA LỖI PUBNUB 400 BAD REQUEST) ---
 let peerConnection;
 let dataChannel;
 let qrcodeCreated = false;
-const roomId = Math.floor(1000 + Math.random() * 9000).toString(); // Mã phòng ngẫu nhiên 4 số
+const roomId = Math.floor(1000 + Math.random() * 9000).toString(); 
 const topic = `trancuong_mame_webrtc_${roomId}`;
+// Tạo một UUID ngẫu nhiên để khai báo định danh thiết bị hợp lệ theo chuẩn PubNub mới nhất
+const myUUID = "host_" + Math.random().toString(36).substring(2, 11);
 
 function kichHoatMayChuPC() {
-    // Hiện vùng chứa mã QR lên
     document.getElementById("qrcode-area").style.display = "block";
     const statusText = document.getElementById("status-text");
     
     if(!qrcodeCreated) {
-        // Tạo mã QR chứa ID phòng
         new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
         statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
         qrcodeCreated = true;
@@ -731,6 +731,8 @@ function kichHoatMayChuPC() {
 }
 
 function initWebRTC() {
+    if (peerConnection) return; // Không khởi tạo đè nếu đã tồn tại
+
     peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
@@ -775,20 +777,23 @@ function thietLapDataChannel() {
 }
 
 async function guiTinHieu(msg) {
-    await fetch(`https://pubsub.pubnub.com/publish/pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/0/${topic}/0`, {
+    // Ép thêm UUID vào luồng gửi dữ liệu để máy chủ PubNub xử lý đúng luồng
+    await fetch(`https://pubsub.pubnub.com/publish/pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/0/${topic}/0?uuid=${myUUID}`, {
         method: "POST",
         body: JSON.stringify(msg)
     });
 }
 
 function langNgheTinHieuAndroid() {
-    const sse = new EventSource(`https://pubsub.pubnub.com/v2/subscribe/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/${topic}/0?heartbeat=30`);
+    // SỬA LỖI CHÍNH: Thêm tham số &uuid vào URL EventSource để fix triệt để lỗi 400 Bad Request
+    const sse = new EventSource(`https://pubsub.pubnub.com/v2/subscribe/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/${topic}/0?heartbeat=30&uuid=${myUUID}`);
+    
     sse.onmessage = async function(e) {
         const rawData = JSON.parse(e.data);
         const msg = rawData.m;
         if (!msg || msg.from === 'PC') return;
 
-        if (!peerConnection) initWebRTC();
+        initWebRTC();
 
         if (msg.type === 'offer') {
             await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer));
@@ -796,8 +801,16 @@ function langNgheTinHieuAndroid() {
             await peerConnection.setLocalDescription(answer);
             guiTinHieu({ type: 'answer', answer: answer, from: 'PC' });
         } else if (msg.type === 'candidate' && peerConnection.remoteDescription) {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            } catch(err) {
+                console.log("Lỗi nạp ICE candidate: ", err);
+            }
         }
+    };
+
+    sse.onerror = function() {
+        console.log("Luồng tín hiệu gặp sự cố, hệ thống đang tự động kết nối lại...");
     };
 }
 </script>
