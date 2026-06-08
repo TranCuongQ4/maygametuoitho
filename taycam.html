@@ -485,5 +485,58 @@ document.documentElement.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 </script>
+
+<script>
+// 1. Chặn chuột phải
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+}, false);
+
+// 2. Chặn quét khối (bôi đen văn bản)
+document.addEventListener('selectstart', function(e) {
+    e.preventDefault();
+});
+
+// 3. Chặn các phím tắt copy/paste/save (F12, Ctrl+U, Ctrl+C, v.v.)
+document.addEventListener('keydown', function(e) {
+    // Chặn F12
+    if (e.keyCode === 123) {
+        e.preventDefault();
+    }
+    // Chặn Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) {
+        e.preventDefault();
+    }
+    if (e.ctrlKey && e.keyCode === 85) {
+        e.preventDefault();
+    }
+});
+</script>
+
+
+<script>
+// 1. Chặn chuột phải (Context Menu)
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+}, false);
+
+// 2. Chặn quét khối / bôi đen văn bản trên toàn trang
+document.addEventListener('selectstart', function(e) {
+    e.preventDefault();
+});
+
+// 3. Chặn các phím tắt copy/paste (không chặn F12)
+document.addEventListener('keydown', function(e) {
+    // Chặn Ctrl+U (xem nguồn trang)
+    if (e.ctrlKey && e.keyCode === 85) {
+        e.preventDefault();
+    }
+    // Chặn Ctrl+C, Ctrl+A (copy/chọn tất cả) nếu muốn
+    if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 65)) {
+        e.preventDefault();
+    }
+});
+</script>
+
 </body>
 </html>
