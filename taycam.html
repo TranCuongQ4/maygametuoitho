@@ -3,46 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tay Cầm Ảo PeerJS - SNES Player 2</title>
+<title>Tay Cầm Ảo PeerJS 3D - SNES Joystick P2</title>
 <style>
 * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
-html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #161b22; font-family: Arial, sans-serif; }
-body { display: flex; flex-direction: column; justify-content: space-between; padding: 5px 15px; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #14171c; font-family: 'Segoe UI', Arial, sans-serif; }
+body { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 16px; }
 
-.header-status { width: 100%; display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 13px; height: 35px; border-bottom: 1px solid #30363d; }
+.header-status { width: 100%; display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 13px; height: 35px; border-bottom: 1px solid #22272e; }
 .status-dot { display: inline-block; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; margin-right: 5px; }
 .connected .status-dot { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
 
-.shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; margin-top: 2px; }
-.shoulder-btn { width: 90px; height: 35px; background: #28303d; border: 2px solid #444; color: #fff; font-weight: bold; border-radius: 15px 15px 5px 5px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 3px 6px rgba(0,0,0,0.3); }
-.shoulder-btn:active, .shoulder-btn.active { background: #00ffcc; color: #000; border-color: #fff; }
+/* Nút Vai L/R Thiết Kế Nổi Khối 3D Chuyên Nghiệp */
+.shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; }
+.shoulder-btn { 
+    width: 110px; 
+    height: 40px; 
+    background: linear-gradient(180deg, #3a4454, #242b35); 
+    border: 1px solid #4e5a6f; 
+    color: #fff; 
+    font-weight: bold; 
+    font-size: 16px;
+    border-radius: 20px 20px 8px 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: 0 5px 0px #161a20, 0 6px 10px rgba(0,0,0,0.6);
+    transition: all 0.05s ease;
+}
+.shoulder-btn:active, .shoulder-btn.active { 
+    transform: translateY(4px);
+    box-shadow: 0 1px 0px #161a20, 0 2px 4px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, #00ffcc, #00ccaa);
+    color: #000;
+}
 
-.gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 5px; }
+.gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 10px; }
 
-/* CỤM DI CHUYỂN DPAD MAP CHUẨN PLAYER 2 EMULATORJS (I / K / J / L) */
-.dpad { position: relative; width: 150px; height: 150px; }
-.dpad-btn { position: absolute; background: #21262d; border: 2px solid #30363d; color: #8b949e; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-.dpad-btn:active, .dpad-btn.active { background: #00ffcc; color: #000; border-color: #fff; box-shadow: 0 0 12px #00ffcc; }
-.dpad-up { top: 0; left: 50px; width: 50px; height: 55px; border-radius: 8px 8px 0 0; }
-.dpad-down { bottom: 0; left: 50px; width: 50px; height: 55px; border-radius: 0 0 8px 8px; }
-.dpad-left { top: 50px; left: 0; width: 55px; height: 50px; border-radius: 8px 0 0 8px; }
-.dpad-right { top: 50px; right: 0; width: 55px; height: 50px; border-radius: 0 8px 8px 0; }
-.dpad-center { top: 50px; left: 50px; width: 50px; height: 50px; background: #30363d; border: none; }
+/* CỤM XOAY ANALOG JOYSTICK 3D SANG TRỌNG */
+.joystick-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    background: radial-gradient(circle, #1a1f26 40%, #0d1117 100%);
+    border: 4px solid #2d3540;
+    border-radius: 50%;
+    box-shadow: inset 0 6px 12px rgba(0,0,0,0.8), 0 4px 8px rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.joystick-knob {
+    position: absolute;
+    width: 76px;
+    height: 76px;
+    background: radial-gradient(circle, #485566 0%, #29323d 80%, #1c222a 100%);
+    border: 2px solid #5c6d82;
+    border-radius: 50%;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: transform 0.05s ease;
+}
 
-.center-controls { display: flex; flex-direction: column; gap: 8px; align-items: center; }
-.sys-btn { background: #21262d; border: 1px solid #444; color: #fff; padding: 6px 14px; border-radius: 15px; font-size: 11px; font-weight: bold; text-align: center; box-shadow: 0 3px 6px rgba(0,0,0,0.2); width: 95px; }
-.sys-btn:active, .sys-btn.active { background: #ffcc00; color: #000; }
-.btn-scan { background: #ff3366; color: #fff; font-weight: bold; border: 1px solid #fff; width: 100px; padding: 8px 10px; border-radius: 6px; }
+/* HỆ THỐNG ĐIỀU KHIỂN TRUNG TÂM */
+.center-controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.sys-btn { 
+    background: linear-gradient(180deg, #323945, #1f242b); 
+    border: 1px solid #444; 
+    color: #fff; 
+    padding: 8px 16px; 
+    border-radius: 20px; 
+    font-size: 11px; 
+    font-weight: bold; 
+    text-align: center; 
+    box-shadow: 0 4px 0px #111, 0 4px 6px rgba(0,0,0,0.4); 
+    width: 105px; 
+}
+.sys-btn:active, .sys-btn.active { 
+    transform: translateY(3px);
+    box-shadow: 0 1px 0px #111, 0 1px 3px rgba(0,0,0,0.4);
+    background: #ffcc00; 
+    color: #000; 
+}
+.btn-scan { 
+    background: linear-gradient(180deg, #ff416c, #ff4b2b); 
+    color: #fff; 
+    font-weight: bold; 
+    border: 1px solid #fff; 
+    width: 105px; 
+    padding: 10px 12px; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 0px #991b1b, 0 4px 8px rgba(0,0,0,0.4);
+}
+.btn-scan:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0px #991b1b, 0 1px 3px rgba(0,0,0,0.4);
+}
 
-/* CỤM NÚT HÌNH KIM CƯƠNG SNES CHUẨN CHO P2 */
-.snes-diamond { position: relative; width: 150px; height: 150px; }
-.action-btn { position: absolute; width: 48px; height: 48px; background: #21262d; border: 2px solid #444; color: #fff; border-radius: 50%; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
-.action-btn:active, .action-btn.active { background: currentColor !important; color: #000 !important; box-shadow: 0 0 15px currentColor; border-color: #fff !important; }
+/* CỤM NÚT NHẤN SNES 3D SIÊU LỚN NỔI KHỐI BÓNG */
+.snes-diamond { position: relative; width: 170px; height: 170px; }
+.action-btn { 
+    position: absolute; 
+    width: 56px; 
+    height: 56px; 
+    border-radius: 50%; 
+    font-size: 20px; 
+    font-weight: bold; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: all 0.05s ease;
+}
 
-.btn-x { top: 0; left: 51px; border-color: #3399ff; color: #3399ff; }   
-.btn-y { top: 51px; left: 0; border-color: #9933ff; color: #9933ff; }   
-.btn-a { top: 51px; right: 0; border-color: #ff3366; color: #ff3366; }  
-.btn-b { bottom: 0; left: 51px; border-color: #ffcc00; color: #ffcc00; } 
+/* Đổ bóng 3D dày cộm cực đẹp theo chuẩn màu gốc SNES */
+.btn-x { 
+    top: 0; left: 57px; 
+    background: linear-gradient(180deg, #5dade2, #2e86c1); 
+    border: 2px solid #85c1e9; color: #fff; 
+    box-shadow: 0 6px 0px #1b4f72, 0 6px 12px rgba(0,0,0,0.5);
+}   
+.btn-y { 
+    top: 57px; left: 0; 
+    background: linear-gradient(180deg, #bb8fce, #7d3c98); 
+    border: 2px solid #d7bde2; color: #fff; 
+    box-shadow: 0 6px 0px #4a235a, 0 6px 12px rgba(0,0,0,0.5);
+}   
+.btn-a { 
+    top: 57px; right: 0; 
+    background: linear-gradient(180deg, #f1948a, #cb4335); 
+    border: 2px solid #f5b7b1; color: #fff; 
+    box-shadow: 0 6px 0px #78281f, 0 6px 12px rgba(0,0,0,0.5);
+}  
+.btn-b { 
+    bottom: 0; left: 57px; 
+    background: linear-gradient(180deg, #f8c471, #d35400); 
+    border: 2px solid #fad7a0; color: #fff; 
+    box-shadow: 0 6px 0px #7e5109, 0 6px 12px rgba(0,0,0,0.5);
+} 
+
+/* Hiệu ứng ép nút lún xuống khi bấm trúng */
+.action-btn:active, .action-btn.active { 
+    transform: translateY(5px);
+    box-shadow: 0 1px 0px #000, 0 2px 4px rgba(0,0,0,0.4);
+    filter: brightness(1.2);
+}
 
 #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; flex-direction: column; justify-content: center; align-items: center; }
 #reader { width: 260px; height: 260px; background: #000; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; }
@@ -53,8 +156,8 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 <body>
 
 <div class="header-status" id="status-bar">
-    <div>🎮 THIẾT BỊ: <span style="color: #ffcc00; font-weight:bold;">TAY CẦM P2 (SNES)</span></div>
-    <div id="status-text"><span class="status-dot"></span>Chưa kết nối. Nhấn nút đỏ quét QR!</div>
+    <div>🎮 THIẾT BỊ: <span style="color: #00ffcc; font-weight:bold;">TAY SNES JOYSTICK P2</span></div>
+    <div id="status-text"><span class="status-dot"></span>Chưa liên kết. Bấm Quét QR!</div>
 </div>
 
 <div class="shoulder-area">
@@ -63,17 +166,13 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 </div>
 
 <div class="gamepad-area">
-    <div class="dpad">
-        <div class="dpad-btn dpad-up" data-key="i" data-keycode="73" data-code="KeyI">▲</div>
-        <div class="dpad-btn dpad-left" data-key="j" data-keycode="74" data-code="KeyJ">◀</div>
-        <div class="dpad-btn dpad-center"></div>
-        <div class="dpad-btn dpad-right" data-key="l" data-keycode="76" data-code="KeyL">▶</div>
-        <div class="dpad-btn dpad-down" data-key="k" data-keycode="75" data-code="KeyK">▼</div>
+    <div class="joystick-container" id="joy-container">
+        <div class="joystick-knob" id="joy-knob"></div>
     </div>
 
     <div class="center-controls">
         <button class="btn-scan" onclick="moCameraQuet()">📷 QUÉT QR</button>
-        <div class="sys-btn" data-key="0" data-keycode="48" data-code="Digit0" style="margin-top: 5px;">SELECT (COIN)</div>
+        <div class="sys-btn" data-key="0" data-keycode="48" data-code="Digit0">SELECT (COIN)</div>
         <div class="sys-btn" data-key="9" data-keycode="57" data-code="Digit9">START</div>
     </div>
 
@@ -105,7 +204,7 @@ function moCameraQuet() {
         (qrText) => { dongCameraQuet(); ketNoiMayChuPeerJS(qrText.trim()); },
         () => {}
     ).catch(() => {
-        alert("Không mở được camera. Hãy cấp quyền truy cập camera cho trình duyệt!");
+        alert("Không mở được camera!");
         dongCameraQuet();
     });
 }
@@ -118,24 +217,23 @@ function dongCameraQuet() {
 function ketNoiMayChuPeerJS(roomId) {
     const statusBar = document.getElementById("status-bar");
     const statusText = document.getElementById("status-text");
-    statusText.innerText = `Đang kết nối đến mã phòng: ${roomId}...`;
+    statusText.innerText = `Đang kết nối cực nhanh...`;
 
     if (peer) { peer.destroy(); }
-
     peer = new Peer({ config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
 
     peer.on('open', function() {
-        conn = peer.connect(`trancuong_mame_${roomId}`);
+        // CHÌA KHÓA CHỐNG TRỄ: Cấu hình ordered:false gửi gói dữ liệu tức thời không chặn luồng
+        conn = peer.connect(`trancuong_mame_${roomId}`, { reliable: false, ordered: false });
         conn.on('open', function() {
             statusBar.classList.add("connected");
-            statusText.innerHTML = "<span class='status-dot'></span>KẾT NỐI TAY CẦM THÀNH CÔNG!";
+            statusText.innerHTML = "<span class='status-dot'></span>TAY CẦM 0ms SẴN SÀNG!";
         });
         conn.on('close', function() {
             statusBar.classList.remove("connected");
-            statusText.innerText = "❌ Mất kết nối. Vui lòng quét lại.";
+            statusText.innerText = "❌ Mất kết nối.";
         });
     });
-    peer.on('error', function(err) { statusText.innerText = "❌ Không tìm thấy phòng PC này."; });
 }
 
 function guiLenhPhim(type, key, keyCode, code) {
@@ -150,13 +248,14 @@ function guiLenhPhim(type, key, keyCode, code) {
     }
 }
 
+// Logic điều khiển Đa điểm (Multi-touch) dành cho các nút bấm hành động 3D
 const activeButtons = new Set();
 function handleTouch(e) {
     const currentTouches = new Set();
     for (let i = 0; i < e.touches.length; i++) {
         const touch = e.touches[i];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element && (element.classList.contains('dpad-btn') || element.classList.contains('action-btn') || element.classList.contains('sys-btn') || element.classList.contains('shoulder-btn'))) {
+        if (element && (element.classList.contains('action-btn') || element.classList.contains('sys-btn') || element.classList.contains('shoulder-btn'))) {
             if (element.getAttribute('data-key')) currentTouches.add(element);
         }
     }
@@ -181,7 +280,101 @@ window.addEventListener('touchmove', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
 window.addEventListener('touchcancel', handleTouch, { passive: false });
 
-document.documentElement.addEventListener('touchstart', function (e) {
+// LOGIC XỬ LÝ CỤM XOAY JOYSTICK ANALOG CHUYỂN ĐỔI PHÍM
+const joyContainer = document.getElementById('joy-container');
+const joyKnob = document.getElementById('joy-knob');
+let joystickActive = false;
+let joyTouchId = null;
+const maxDistance = 40; 
+let currentKeys = { i: false, k: false, j: false, l: false };
+
+const keyMapJoy = {
+    i: { key: "i", keyCode: 73, code: "KeyI" },
+    k: { key: "k", keyCode: 75, code: "KeyK" },
+    j: { key: "j", keyCode: 74, code: "KeyJ" },
+    l: { key: "l", keyCode: 76, code: "KeyL" }
+};
+
+function updateJoystickKeys(targetKeys) {
+    for (let k in currentKeys) {
+        if (targetKeys[k] && !currentKeys[k]) {
+            guiLenhPhim("keydown", keyMapJoy[k].key, keyMapJoy[k].keyCode, keyMapJoy[k].code);
+            currentKeys[k] = true;
+        } else if (!targetKeys[k] && currentKeys[k]) {
+            guiLenhPhim("keyup", keyMapJoy[k].key, keyMapJoy[k].keyCode, keyMapJoy[k].code);
+            currentKeys[k] = false;
+        }
+    }
+}
+
+joyContainer.addEventListener('touchstart', (e) => {
+    if (joystickActive) return;
+    const touch = e.changedTouches[0];
+    joystickActive = true;
+    joyTouchId = touch.identifier;
+    moveJoystick(touch);
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+    if (!joystickActive) return;
+    for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === joyTouchId) {
+            moveJoystick(e.touches[i]);
+            break;
+        }
+    }
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+    if (!joystickActive) return;
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyTouchId) {
+            joystickActive = false;
+            joyTouchId = null;
+            joyKnob.style.transform = `translate(0px, 0px)`;
+            updateJoystickKeys({ i: false, k: false, j: false, l: false });
+            break;
+        }
+    }
+});
+
+function moveJoystick(touch) {
+    const rect = joyContainer.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    let deltaX = touch.clientX - centerX;
+    let deltaY = touch.clientY - centerY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    if (distance > maxDistance) {
+        deltaX = (deltaX / distance) * maxDistance;
+        deltaY = (deltaY / distance) * maxDistance;
+    }
+    
+    joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+    
+    let nextKeys = { i: false, k: false, j: false, l: false };
+    const threshold = 15; 
+    
+    if (distance > threshold) {
+        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+        // Phân bổ góc quét 360 độ sang 4 hướng đi chéo cho Player 2
+        if (angle >= -120 && angle <= -60) nextKeys.i = true; 
+        else if (angle >= 60 && angle <= 120) nextKeys.k = true; 
+        else if (angle >= -30 && angle <= 30) nextKeys.l = true; 
+        else if (angle >= 150 || angle <= -150) nextKeys.j = true; 
+        else {
+            if (angle > -60 && angle < -30) { nextKeys.i = true; nextKeys.l = true; }
+            if (angle > -150 && angle < -120) { nextKeys.i = true; nextKeys.j = true; }
+            if (angle > 30 && angle < 60) { nextKeys.k = true; nextKeys.l = true; }
+            if (angle > 120 && angle < 150) { nextKeys.k = true; nextKeys.j = true; }
+        }
+    }
+    updateJoystickKeys(nextKeys);
+}
+
+document.documentElement.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 </script>
