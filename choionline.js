@@ -16,10 +16,8 @@ let currentRoomId = null;
 let isOnlineMode = false;
 let myRole = ""; // "host" hoặc "guest"
 
-// Hàng đợi lưu tạm thời các ICE Candidate nếu nó đến quá sớm khi chưa setRemoteDescription
 let pendingCandidates = [];
 
-// Cấu hình STUN server miễn phí của Google để tìm kiếm địa chỉ IP WAN P2P
 const rtcConfig = {
     iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -27,47 +25,39 @@ const rtcConfig = {
     ]
 };
 
-// BẢNG ÁNH XẠ NÚT BẤM (MAP PHÍM SANG MÃ RETROARCH BUTTON ID CHUẨN SNES9X)
-// 0: Up, 1: Down, 2: Left, 3: Right, 8: A, 9: B, 11: Select(Coin), 10: Start
+// BẢNG ÁNH XẠ NÚT BẤM SANG MÃ RETROARCH BUTTON ID TRONG SNES9X
+// 0: Up, 1: Down, 2: Left, 3: Right, 8: A, 9: B, 11: Select, 10: Start
 const P1_KEYS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "z", "x", "Shift", "Enter"];
 const P2_KEYS = ["w", "s", "a", "d", "i", "o", "c", "v"];
 
 const KEY_TO_BUTTON_ID = {
-    // Luồng phím Player 1
     "ArrowUp": 0, "ArrowDown": 1, "ArrowLeft": 2, "ArrowRight": 3,
     "z": 8, "x": 9, "Shift": 11, "Enter": 10,
-    // Luồng phím Player 2
     "w": 0, "s": 1, "a": 2, "d": 3,
     "i": 8, "o": 9, "c": 11, "v": 10
 };
 
-// --- [CẤU HÌNH VÀNG ĐỂ SNES9X/RETROARCH KÍCH HOẠT 2 TAY CẦM ĐỘC LẬP] ---
-// Cần khai báo trực tiếp các biến toàn cục này để cấu trúc EmulatorJS tiêm thẳng vào hàm retro_set_controller_port_device của lõi Snes9x C++
+// Ép cấu hình số lượng người chơi cho EmulatorJS từ đầu
 window.EJS_players = 2;
 window.EJS_maxPlayers = 2;
-window.EJS_gamepad = true; // Bật tính năng ảo hóa thiết bị tay cầm vật lý
+window.EJS_gamepad = true;
 
-// Hàm can thiệp ngay thời điểm lõi WASM vừa được nạp vào bộ nhớ, trước khi chạy khung hình đầu tiên của ROM
 window.EJS_onGameStart = function() {
     console.log("🎮 Lõi giả lập bắt đầu chạy - Tiến hành phân tách thiết bị phần cứng ảo Snes9x...");
-    
-    // Tách biệt cấu hình nội bộ nếu API lõi tồn tại
     if (window.EJS_emulator && window.EJS_emulator.api) {
         try {
-            // Ép bộ điều khiển trung tâm nhận diện: Cổng 0 = Tay cầm 1, Cổng 1 = Tay cầm 2
             if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
-                // 1 đại diện cho RETRO_DEVICE_JOYPAD trong cấu trúc mã nguồn snes9x / libretro.h
+                // Ép cả 2 cổng nhận diện dạng RETRO_DEVICE_JOYPAD (giá trị 1)
                 window.EJS_emulator.api.setControllerPortDevice(0, 1);
                 window.EJS_emulator.api.setControllerPortDevice(1, 1);
-                console.log("✅ Đã ép cấu hình cổng phần cứng: Port 0 và Port 1 -> RETRO_DEVICE_JOYPAD thành công.");
+                console.log("✅ Đã ép cấu hình cổng snes9x: Port 0 & Port 1 -> RETRO_DEVICE_JOYPAD");
             }
         } catch (err) {
-            console.log("Cảnh báo can thiệp tầng API C++ thất bại, chuyển hướng xử lý qua luồng mô phỏng nhị phân...");
+            console.log("Lỗi ép cổng thiết bị tầng API:", err);
         }
     }
 };
 
-// --- THEO DÕI TRẠNG THÁI MẠNG ĐỂ TỰ ĐỘNG KHÔI PHỤC KẾT NỐI CỦA FIREBASE ---
 db.ref(".info/connected").on("value", (snapshot) => {
     if (snapshot.val() === false) {
         console.log("⚠️ Phát hiện mất kết nối mạng hoặc Firebase đang tải lại...");
@@ -86,7 +76,6 @@ db.ref(".info/connected").on("value", (snapshot) => {
     }
 });
 
-// --- KIỂM TRA ĐƯỜNG DẪN URL XEM CÓ PHẢI LÀ KHÁCH CLICK VÀO LINK KHÔNG ---
 window.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('room')) {
@@ -97,7 +86,6 @@ window.addEventListener("DOMContentLoaded", () => {
         isHost = false;
         myRole = "guest";
         
-        // Hiển thị modal kết nối phía khách
         const modal = document.getElementById("online-modal");
         if(modal) modal.style.display = "flex";
         
@@ -107,12 +95,10 @@ window.addEventListener("DOMContentLoaded", () => {
         const body = document.getElementById("online-body");
         if(body) body.innerHTML = `<p style='color:#00ffcc;'>🎮 Đang tham gia phòng: <b>${currentRoomId}</b></p><p id='join-status'>⚡ Đang thiết lập kết nối mạng P2P...</p>`;
         
-        // Khách tiến hành vào phòng công khai
         joinOnlineRoom(currentRoomId, gameParam);
     }
 });
 
-// --- CHỨC NĂNG 1: TẠO PHÒNG VÀ TỰ ĐỘNG DỌN DẸP FIREBASE QUÁ 12 GIỜ (DÀNH CHO HOST) ---
 function createOnlineRoom() {
     isOnlineMode = true;
     isHost = true;
@@ -123,7 +109,6 @@ function createOnlineRoom() {
         try { peerConnection.close(); } catch(e){}
     }
     
-    // --- BỘ QUẢN LÝ RESET DỮ LIỆU CHỐNG TRÀN FIREBASE (12 TIẾNG) ---
     const now = Date.now();
     const twelveHours = 12 * 60 * 60 * 1000; 
     
@@ -141,16 +126,13 @@ function createOnlineRoom() {
         }
     });
 
-    // Tạo ID phòng ngẫu nhiên gồm 6 chữ số
     currentRoomId = Math.floor(100000 + Math.random() * 900000);
     const roomRef = db.ref("rooms/" + currentRoomId);
     
-    // Sinh đường dẫn phòng gửi cho bạn bè
     const roomLink = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}&game=${encodeURIComponent(currentSelectedRomUrl)}`;
     document.getElementById("room-link-input").value = roomLink;
     document.getElementById("room-info-section").style.display = "block";
     
-    // Khởi tạo thông tin phòng lên Firebase kèm mốc thời gian thực
     roomRef.set({
         gameUrl: currentSelectedRomUrl,
         gameName: currentSelectedRomName,
@@ -158,7 +140,6 @@ function createOnlineRoom() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Lắng nghe tín hiệu Re-connect hoặc Connect mới từ Khách gửi lên
     roomRef.child("answer").on("value", async (snapshot) => {
         const answer = snapshot.val();
         if (answer && peerConnection && peerConnection.signalingState === "have-local-offer") {
@@ -174,7 +155,6 @@ function createOnlineRoom() {
                 
                 processPendingCandidates();
 
-                // Nếu game chưa chạy thì mới kích hoạt, nếu đang chạy sẵn (khách vào lại) thì bỏ qua không load lại game
                 const emulatorEl = document.querySelector("#emulator");
                 if (!emulatorEl || emulatorEl.innerHTML === "") {
                     setTimeout(() => {
@@ -190,7 +170,6 @@ function createOnlineRoom() {
         }
     });
 
-    // Lắng nghe các ICE Candidate mới từ khách gửi lên (Dùng để bắt tay lại khi mất mạng)
     roomRef.child("guestCandidates").on("child_added", (snapshot) => {
         const candidate = snapshot.val();
         if (candidate && peerConnection) {
@@ -202,11 +181,9 @@ function createOnlineRoom() {
         }
     });
 
-    // Khởi tạo quy trình WebRTC
     setupWebRTC(roomRef);
 }
 
-// Hàm giải phóng hàng đợi candidate
 function processPendingCandidates() {
     if (peerConnection && peerConnection.remoteDescription) {
         while (pendingCandidates.length > 0) {
@@ -216,7 +193,6 @@ function processPendingCandidates() {
     }
 }
 
-// Hàm sao chép link phòng nhanh
 function copyRoomLink() {
     const copyText = document.getElementById("room-link-input");
     copyText.select();
@@ -225,7 +201,6 @@ function copyRoomLink() {
     alert("Đã copy link phòng! Hãy gửi link này cho bạn chơi qua Zalo nhé.");
 }
 
-// --- CHỨC NĂNG 2: THAM GIA PHÒNG VÀ TỰ ĐỘNG RECONNECT (DÀNH CHO GUEST) ---
 async function joinOnlineRoom(roomId, gameUrl) {
     const roomRef = db.ref("rooms/" + roomId);
     pendingCandidates = []; 
@@ -273,7 +248,6 @@ async function joinOnlineRoom(roomId, gameUrl) {
             await peerConnection.setLocalDescription(answer);
             
             const answerObj = JSON.parse(JSON.stringify(answer));
-            // Cập nhật lên Firebase trạng thái phòng và câu trả lời mạng
             await roomRef.update({ answer: answerObj, status: "connected" });
 
             processPendingCandidates();
@@ -294,7 +268,6 @@ async function joinOnlineRoom(roomId, gameUrl) {
     });
 }
 
-// --- CHỨC NĂNG 3: KHỞI TẠO ĐƯỜNG TRUYỀN WEBRTC ---
 async function setupWebRTC(roomRef) {
     peerConnection = new RTCPeerConnection(rtcConfig);
     
@@ -319,15 +292,13 @@ async function setupWebRTC(roomRef) {
     }
 }
 
-// Cấu hình sự kiện mở đóng của đường truyền data channel
 function setupDataChannelEvents() {
     dataChannel.onopen = () => {
         console.log("🚀 Đường truyền WebRTC đã kết nối thành công!");
         
-        // Kích hoạt bộ đánh chặn và xử lý luồng phím cứng
+        // Chạy bộ bẻ khóa luồng phím
         setupOnlineKeySync();
 
-        // Nếu là Host, tiến hành chụp ảnh trạng thái game gửi cho Khách
         if (isHost) {
             const checkAndSyncState = () => {
                 if (window.EJS_emulator && window.EJS_emulator.gameManager) {
@@ -376,14 +347,12 @@ function setupDataChannelEvents() {
         }
 
         if (!isHost && isOnlineMode && currentRoomId) {
-            console.log("🔄 Đang thử tự động kết nối lại vào phòng bằng link ban đầu...");
             setTimeout(() => {
                 joinOnlineRoom(currentRoomId, currentSelectedRomUrl);
             }, 3000);
         }
         
         if (isHost && currentRoomId) {
-            console.log("🔄 Host làm sạch kênh phụ để đón khách quay lại phòng cũ...");
             const roomRef = db.ref("rooms/" + currentRoomId);
             roomRef.child("answer").remove();
             roomRef.child("guestCandidates").remove();
@@ -395,11 +364,9 @@ function setupDataChannelEvents() {
         }
     };
 
-    // NHẬN TÍN HIỆU TỪ MÁY ĐỐI THỦ
     dataChannel.onmessage = (event) => {
         const msg = JSON.parse(event.data);
         
-        // Nhận lệnh mô phỏng Tay cầm từ luồng mạng
         if (msg.type === "gamepad_input") {
             executeDirectGamepadInput(msg.player, msg.button, msg.value);
         }
@@ -412,7 +379,6 @@ function setupDataChannelEvents() {
                         window.EJS_emulator.gameManager.loadState(u8Array);
                         console.log("✅ Đã kéo dòng thời gian game khớp 100% với chủ phòng!");
                     } catch(err) {
-                        console.log("Lõi giả lập chưa tải xong ROM, đang đợi để ép đồng bộ...", err);
                         setTimeout(tryLoadState, 500);
                     }
                 } else {
@@ -424,18 +390,31 @@ function setupDataChannelEvents() {
     };
 }
 
-// --- CHỨC NĂNG 4: BỘ ĐÁNH CHẶN VÀ ĐIỀU PHỐI LUỒNG NHẬP LIỆU TAY CẦM ---
+// --- CHỨC NĂNG 4: BỘ ĐÁNH CHẶN VÀ VÔ HIỆU HÓA HOÀN TOÀN TRÌNH QUẢN LÝ PHÍM MẶC ĐỊNH ---
 function setupOnlineKeySync() {
     if (!isOnlineMode) return;
-    console.log("⌨️ Hệ thống bẻ khóa luồng Tay Cầm Độc Lập snes9x đã kích hoạt.");
+    console.log("⌨️ Khởi động luồng bẻ khóa sâu hệ thống phím...");
 
-    // Xóa bỏ hoàn toàn lắng nghe mặc định của EmulatorJS tránh việc nó tự map phím đè lên Player 1
-    if (window.EJS_emulator && window.EJS_emulator.gameManager) {
-        window.removeEventListener("keydown", window.EJS_emulator.gameManager.handleKeyDown);
-        window.removeEventListener("keyup", window.EJS_emulator.gameManager.handleKeyUp);
-    }
+    // VÒNG LẶP LIÊN TỤC: Đợi đến khi EmulatorJS thực sự gán hàm xử lý của nó thì gỡ bỏ ngay lập tức
+    const overrideInterval = setInterval(() => {
+        if (window.EJS_emulator && window.EJS_emulator.gameManager && window.EJS_emulator.gameManager.handleKeyDown) {
+            try {
+                window.removeEventListener("keydown", window.EJS_emulator.gameManager.handleKeyDown);
+                window.removeEventListener("keyup", window.EJS_emulator.gameManager.handleKeyUp);
+                
+                // Ghi đè rỗng luôn hàm nội bộ của nó để loại bỏ tận gốc cơ chế tự nhận phím
+                window.EJS_emulator.gameManager.handleKeyDown = function(e) { e.preventDefault(); };
+                window.EJS_emulator.gameManager.handleKeyUp = function(e) { e.preventDefault(); };
+                
+                clearInterval(overrideInterval);
+                console.log("🔥 Đã vô hiệu hóa thành công bộ điều khiển phím gốc của EmulatorJS!");
+            } catch (e) {
+                console.log("Đang thử lại việc gỡ bộ lắng nghe phím...", e);
+            }
+        }
+    }, 100);
 
-    // Tự bắt sự kiện bằng Capture Mode ưu tiên cao nhất trong DOM trình duyệt
+    // Đăng ký bộ lắng nghe phím độc lập mới, chặn đứng lan truyền (Capture Mode = true)
     window.addEventListener("keydown", (e) => handleStrictKeyEvent(e, 1), true);
     window.addEventListener("keyup", (e) => handleStrictKeyEvent(e, 0), true);
 }
@@ -444,22 +423,19 @@ function handleStrictKeyEvent(event, value) {
     if (!isOnlineMode || !dataChannel || dataChannel.readyState !== "open") return;
 
     const pressedKey = event.key;
-    
     if (!(pressedKey in KEY_TO_BUTTON_ID)) return;
 
-    // Chặn đứng tuyệt đối không cho trình duyệt đẩy mã phím text tự do vào lõi WASM
+    // Chặn đứng hoàn toàn không cho trình duyệt đẩy phím text vào Core WASM
     event.preventDefault();
     event.stopPropagation();
 
     const buttonId = KEY_TO_BUTTON_ID[pressedKey];
 
     if (isHost) {
-        // Máy Host chỉ thu thập dải phím P1 (Mũi tên, Z, X...)
+        // NGƯỜI VÀO ĐẦU (HOST) -> CHỈ NHẬN DI CHUYỂN CHO TAY CẦM 1 (Index = 0)
         if (P1_KEYS.includes(pressedKey)) {
-            // Đẩy vào cổng tay số 1 của máy Host
             executeDirectGamepadInput(1, buttonId, value);
 
-            // Gửi gói tin tay cầm sang máy Khách để đồng bộ hiển thị màn hình bên đó
             dataChannel.send(JSON.stringify({
                 type: "gamepad_input",
                 player: 1,
@@ -468,16 +444,14 @@ function handleStrictKeyEvent(event, value) {
             }));
         }
     } else {
-        // Máy Khách (Guest) bấm dải phím Mũi tên mặc định (P1_KEYS) nhưng hệ thống tự hiểu gán thành P2
+        // NGƯỜI VÀO SAU (GUEST) -> BẤM PHÍM DI CHUYỂN MẶC ĐỊNH SẼ ĐIỀU KHIỂN TAY CẦM 2 (Index = 1)
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
             let mappedP2Key = P2_KEYS[keyIndex];
             const p2ButtonId = KEY_TO_BUTTON_ID[mappedP2Key];
 
-            // Đẩy vào cổng tay số 2 trên máy Khách
             executeDirectGamepadInput(2, p2ButtonId, value);
 
-            // Bắn tín hiệu tay số 2 sang máy Host để điều khiển nhân vật số 2
             dataChannel.send(JSON.stringify({
                 type: "gamepad_input",
                 player: 2,
@@ -488,24 +462,22 @@ function handleStrictKeyEvent(event, value) {
     }
 }
 
-// Ép tín hiệu trực tiếp vào cấu trúc API State nhị phân của snes9x
+// Ghi đè trạng thái Tay cầm trực tiếp vào cấu trúc API State nhị phân Libretro của snes9x
 function executeDirectGamepadInput(targetPlayer, buttonId, value) {
-    if (window.EJS_emulator && window.EJS_emulator.gameManager) {
+    if (window.EJS_emulator) {
         try {
-            // Định nghĩa Index thiết bị phần cứng thực tế (Player 1 = 0, Player 2 = 1)
+            // Định nghĩa chuẩn phần cứng: Player 1 = Cổng 0, Player 2 = Cổng 1
             const playerGamepadIndex = (parseInt(targetPlayer) === 2) ? 1 : 0;
 
-            // Cách 1: Thử nghiệm tiêm trực tiếp bằng bộ mô phỏng phần cứng nhị phân EmulatorJS
-            if (typeof window.EJS_emulator.gameManager.simulateInput === "function") {
-                window.EJS_emulator.gameManager.simulateInput(playerGamepadIndex, buttonId, value);
-            }
-            
-            // Cách 2: Can thiệp sâu bằng hàm C++ tương thích Libretro của RetroArch (Ghi đè song song để chắc chắn ăn nút)
+            // Đẩy song song vào cả hai hàm để đảm bảo lõi C++ của snes9x nhận tín hiệu tức thì
             if (window.EJS_emulator.api && typeof window.EJS_emulator.api.setGamepadState === "function") {
                 window.EJS_emulator.api.setGamepadState(playerGamepadIndex, buttonId, value);
             }
+            if (window.EJS_emulator.gameManager && typeof window.EJS_emulator.gameManager.simulateInput === "function") {
+                window.EJS_emulator.gameManager.simulateInput(playerGamepadIndex, buttonId, value);
+            }
         } catch(err) {
-            // Tránh văng lỗi khi lõi chưa ổn định đồ họa hoàn toàn
+            // Core đang tải khung hình, bỏ qua
         }
     }
 }
