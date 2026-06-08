@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-<title>Trò Chơi Game Thùng</title>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<title>Trò Chơi Game Thùng - Bluetooth Receiver</title>
 
 <style>
 html,body{
@@ -89,10 +86,10 @@ h1{
     color: #00ffcc; 
 }
 
-.btn-taycam {
-    background: linear-gradient(145deg, #ffcc00, #cc9900);
+.btn-bluetooth {
+    background: linear-gradient(145deg, #0066ff, #0044cc);
     border: 2px solid #fff;
-    color: #000;
+    color: #fff;
 }
 
 #romInput{
@@ -151,71 +148,17 @@ h1{
     font-weight:bold;
 }
 
-#guide-modal {
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background-color:rgba(0,0,0,.85);
-    z-index:100050;
-    justify-content:center;
-    align-items:center;
-    box-sizing:border-box;
-    padding:20px;
-}
-
-.modal-content{
-    background:linear-gradient(145deg,#1e1e1e,#161616);
-    border:2px solid #00ffcc;
-    border-radius:16px;
-    width:100%;
-    max-width:360px;
-    box-shadow:0 0 25px rgba(0,255,204,.3);
-    padding:22px;
-    box-sizing:border-box;
-}
-
-.modal-title{
-    color:#ffcc00;
-    font-size:20px;
-    font-weight:bold;
-    margin-bottom:18px;
-    text-align:center;
-}
-
-.modal-body{
-    font-size:14px;
-    line-height:1.6;
-    color:#e0e0e0;
-    margin-bottom:22px;
-}
-
-.modal-item{
-    margin-bottom:10px;
-}
-
-.modal-btn{
-    background:linear-gradient(145deg,#00ffcc,#00ccaa);
-    color:#000;
-    border:none;
-    padding:12px;
-    font-size:15px;
-    font-weight:bold;
-    border-radius:8px;
-    cursor:pointer;
-    width:100%;
-}
-
-.section-title {
-    color:#ffcc00;
-    font-size:18px;
-    margin:15px 0 10px 0;
-    text-align:center;
-    border-top:1px solid #444;
-    padding-top:15px;
-    width:90%;
+#bt-status {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    color: #00ffcc;
+    font-size: 14px;
+    margin-bottom: 15px;
+    border: 1px dashed #00ffcc;
+    width: 85%;
+    max-width: 320px;
+    text-align: center;
 }
 </style>
 </head>
@@ -223,12 +166,15 @@ h1{
 
 <div id="menu-container">
 
-    <h1>🕹️ GAME THÙNG 🕹️</h1>
-    <div class="subtitle">Trò Chơi Ngày Xưa</div>
+    <h1>🕹️ GAME THÙNG BLUETOOTH 🕹️</h1>
+    <div class="subtitle">Kết Nối Không Dây Tốc Độ Cao</div>
+
     <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
 
+    <div id="bt-status">Status: Bluetooth chưa kết nối</div>
+
+    <button class="btn btn-bluetooth" onclick="initBluetoothReceiver()">🔗 KẾT NỐI TAY CẦM MÁY 2 (BLUETOOTH) 🔗</button>
     <button class="btn btn-back" onclick="window.location.href='index.html'">← Trở Về Game Băng Đĩa</button>
-    <button class="btn btn-taycam" onclick="openTayCamPhuModal()">🎮 KÍCH HOẠT TAY CẦM PHỤ (MÁY 2) 🎮</button>
 
     <button class="btn" onclick="askPlayMode('roms/dino.zip')">⚜ Trò Bộ Đội Nổi Tiếng ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/knights.zip')">⚜ Knights of the Round ⚜</button>
@@ -238,27 +184,11 @@ h1{
     <button class="btn" onclick="askPlayMode('roms/wof.zip')">⚜ Tam Quốc Chí 2 ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/ffight.zip')">⚜ Anh Hùng Đường Phố ⚜</button>
     <button class="btn" onclick="askPlayMode('roms/mercs.zip')">⚜ Rambo Mecrs ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/sf2.zip')">⚜ Street Fighter II ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/contra.zip')">⚜ Contra ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/64street.zip')">⚜ 64 Street ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/batsugun.zip')">⚜ Bắn Máy Bay Batsugun ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/ssriders.zip')">⚜ Cao Bồi Viễn Tây ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/tmnt.zip')">⚜ Ningia Rùa ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/3wonders.zip')">⚜ Three Wonder ⚜</button>
-    <button class="btn" onclick="askPlayMode('megaman.zip')">⚜ Mega Man ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/robocop2.zip')">⚜ Robocop 2 ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/gunforc2.zip')">⚜ Gun Force II ⚜</button>
-    <button class="btn" onclick="askPlayMode('roms/punisher.zip')">⚜ Kẻ Trừng Phạt ⚜</button>
+    <button class="btn" onclick="askPlayMode('sf2.zip')">⚜ Street Fighter II ⚜</button>
 
-<div class="section-title">☛ Game Thùng Siêu Thị ☚</div>
-<button class="btn btn-gt" onclick="window.location.href='https://trancuongq4.github.io/neogeosieuthi/'">🕹️ Neo Geo Pro 🕹️</button>
-	
 <div class="section-title">⚙️ Tiện ích ⚙️</div>
-<button class="btn" onclick="openRomSource()">🌐 Tải ROM Từ Kho Game 🌐</button>
 <label for="romInput" class="btn" style="text-align:center;display:block;box-sizing:border-box;margin:6px auto;">📁 Nạp File Rom Từ Máy 📁</label>
 <input type="file" id="romInput" accept=".zip,.7z">
-<button class="btn" onclick="loadRomFromLink()" style="background: linear-gradient(145deg, #1a3a2a, #0a241a); border: 2px solid #66ff99; color: #66ff99;">🔗 Load Game Từ Link Web 🔗</button>
-<button class="btn btn-hd" onclick="moBangHuongDan()">📖 Hướng Dẫn Sử Dụng 📖</button>
 
     <div class="footer">Thiết Kế Trần Cường - Zalo: 0907860662</div>
 </div>
@@ -270,37 +200,16 @@ h1{
     </div>
 </div>
 
-<div id="guide-modal">
-    <div class="modal-content">
-        <div class="modal-title">📖 HƯỚNG DẪN SỬ DỤNG</div>
-        <div class="modal-body">
-            <div class="modal-item">✅ Nhấn vào game muốn chơi sẽ hiện 2 lựa chọn: <b>Chơi 1 mình</b> hoặc <b>Chơi cùng bạn bè</b>.</div>
-            <div class="modal-item">✅ Nếu chọn Chơi cùng bạn bè, hệ thống cấp mã Số Phòng. Hãy gửi mã này cho bạn chơi nhập vào mục <b>Tay Cầm Phụ</b>.</div>
-            <div class="modal-item">✅ Trần Cường <b>Zalo:</b> 0907860662</div>
-        </div>
-        <button class="modal-btn" onclick="dongBangHuongDan()">ĐÃ HIỂU</button>
-    </div>
-</div>
-
 <script>
-const firebaseConfig = {
-    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app"
-};
-if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let currentRoomId = null;
 let isLoaderScriptLoaded = false;
-
-// Khởi tạo mảng đệm cục bộ lưu trạng thái phím của Player 2 (mặc định 0 là nhả nút)
+let bluetoothDevice = null;
 let remoteGamepadState = new Array(16).fill(0);
 
-document.addEventListener("contextmenu", e => e.preventDefault());
-document.addEventListener("selectstart", e => e.preventDefault());
+// SERVICE UUID CHUẨN ĐỂ LIÊN LẠC GIỮA 2 MÁY
+const GAMEPAD_SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+const GAMEPAD_CHAR_UUID    = '0000ffe1-0000-1000-8000-00805f9b34fb';
 
-function openRomSource(){
-    window.open("https://archive.org/download/trancuong", "_blank");
-}
+document.addEventListener("contextmenu", e => e.preventDefault());
 
 document.getElementById("romInput").addEventListener("change", function(e){
     const file = e.target.files[0];
@@ -308,66 +217,56 @@ document.getElementById("romInput").addEventListener("change", function(e){
     askPlayMode(URL.createObjectURL(file), file.name);
 });
 
-function loadRomFromLink() {
-    let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "");
-    if (!urlInput) return;
-    let trimmedUrl = urlInput.trim();
-    if (trimmedUrl === "") return;
-    if(trimmedUrl.includes("archive.org/download/")) {
-        trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
-    }
-    let detectedName = "customrom.zip";
+// KHỞI ĐỘNG THU TÍN HIỆU WEB BLUETOOTH TỪ MÁY TAY CẦM
+async function initBluetoothReceiver() {
+    const statusDiv = document.getElementById("bt-status");
     try {
-        const parts = trimmedUrl.split('/');
-        detectedName = parts[parts.length - 1]; 
-    } catch(e){}
-    askPlayMode(trimmedUrl, detectedName);
-}
+        statusDiv.innerText = "Đang quét thiết bị tay cầm...";
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'EJS_Gamepad' }],
+            optionalServices: [GAMEPAD_SERVICE_UUID]
+        });
 
-function askPlayMode(romUrl, romName = "") {
-    const mode = confirm("Bấm [OK] để 'Chơi cùng bạn bè' (Hiện mã kết nối tay cầm Máy 2)\nBấm [Cancel] để 'Chơi 1 mình' bình thường.");
-    if (mode) {
-        currentRoomId = Math.floor(1000 + Math.random() * 9000);
-        db.ref("gamepads/" + currentRoomId).remove();
-        alert("MÃ PHÒNG KẾT NỐI CỦA BẠN LÀ: " + currentRoomId + "\nHãy đưa mã này cho người thứ 2 nhập vào máy của họ nhé!");
-        listenToRemoteGamepad(currentRoomId);
+        statusDiv.innerText = "Đang kết nối cổng GATT...";
+        const server = await bluetoothDevice.gatt.connect();
+        
+        statusDiv.innerText = "Đang lấy Service...";
+        const service = await server.getPrimaryService(GAMEPAD_SERVICE_UUID);
+        
+        statusDiv.innerText = "Đang mở cổng nhận data...";
+        const characteristic = await service.getCharacteristic(GAMEPAD_CHAR_UUID);
+        
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', handleGamepadData);
+        
+        statusDiv.innerHTML = "🟢 <b>ĐÃ KẾT NỐI TAY CẦM BLUETOOTH THÀNH CÔNG!</b>";
+    } catch(err) {
+        console.error(err);
+        statusDiv.innerText = "❌ Lỗi kết nối Bluetooth: " + err.message;
     }
-    startGame(romUrl, romName);
 }
 
-// LẮNG NGHE ĐỒNG BỘ TRẠNG THÁI MẢNG TỪ FIREBASE VỀ BỘ ĐỆM MÁY 1
-function listenToRemoteGamepad(roomId) {
-    db.ref("gamepads/" + roomId + "/btnState").on("value", (snapshot) => {
-        const arrData = snapshot.val();
-        if (Array.isArray(arrData)) {
-            for (let i = 0; i < arrData.length; i++) {
-                remoteGamepadState[i] = parseInt(arrData[i]) || 0;
-            }
-        }
-    });
-}
-
-// VÒNG LẶP ÉP PHÍM LIÊN TỤC THEO TICK-RATE KHUNG HÌNH (MÔ PHỎNG TAY CẦM BLUETOOTH THẬT)
-function updateRemoteInputLoop() {
-    if (window.EJS_emulator && window.EJS_emulator.api) {
-        const playerIndex = 1; // Cổng P2
-        for (let buttonId = 0; buttonId < 16; buttonId++) {
-            const val = remoteGamepadState[buttonId];
+// XỬ LÝ DỮ LIỆU NHẬN ĐƯỢC TỪ SÓNG BLUETOOTH PHÁT SANG
+function handleGamepadData(event) {
+    const value = event.target.value;
+    // Nhận 2 byte dữ liệu: byte 0 là Button ID, byte 1 là trạng thái (0 hoặc 1)
+    const buttonId = value.getUint8(0);
+    const stateVal = value.getUint8(1);
+    
+    if (buttonId < 16) {
+        remoteGamepadState[buttonId] = stateVal;
+        
+        // Nhồi trực tiếp dữ liệu phím vào core game đang chạy theo thời gian thực
+        if (window.EJS_emulator && window.EJS_emulator.api) {
             try {
-                // Nhồi trực tiếp vào Core API của EmulatorJS
-                window.EJS_emulator.api.setGamepadState(playerIndex, buttonId, val);
+                window.EJS_emulator.api.setGamepadState(1, buttonId, stateVal);
             } catch(e){}
         }
     }
-    requestAnimationFrame(updateRemoteInputLoop);
 }
 
-function openTayCamPhuModal() {
-    let roomIdInput = prompt("Nhập MÃ PHÒNG từ Máy 1 để kết nối tay cầm phụ:");
-    if (!roomIdInput) return;
-    let room = roomIdInput.trim();
-    if (room === "") return;
-    window.location.href = "taycam.html?room=" + room;
+function askPlayMode(romUrl, romName = "") {
+    startGame(romUrl, romName);
 }
 
 function startGame(romUrl, romName = ""){
@@ -381,11 +280,7 @@ function startGame(romUrl, romName = ""){
     window.EJS_core = "arcade";
     window.EJS_gameUrl = romUrl;
 
-    if(romName !== "") {
-        window.EJS_gameName = romName;
-    } else {
-        delete window.EJS_gameName;
-    }
+    if(romName !== "") window.EJS_gameName = romName;
 
     window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";
     window.EJS_corePath = "https://cdn.emulatorjs.org/stable/data/cores/";
@@ -397,17 +292,15 @@ function startGame(romUrl, romName = ""){
     window.EJS_gamepad = true;
 
     window.EJS_onGameStart = function() {
-        console.log("🔥 Lõi MAME đã sẵn sàng.");
+        console.log("🎮 Lõi Game MAME Bluetooth khởi động.");
         if (window.EJS_emulator && window.EJS_emulator.api) {
             try {
                 if (typeof window.EJS_emulator.api.setControllerPortDevice === "function") {
-                    window.EJS_emulator.api.setControllerPortDevice(0, 1); 
-                    window.EJS_emulator.api.setControllerPortDevice(1, 1); 
+                    window.EJS_emulator.api.setControllerPortDevice(0, 1);
+                    window.EJS_emulator.api.setControllerPortDevice(1, 1);
                 }
             } catch (err){}
         }
-        // Khởi chạy vòng lặp nạp phím thời gian thực
-        requestAnimationFrame(updateRemoteInputLoop);
     };
 
     window.dispatchEvent(new Event("resize"));
@@ -474,9 +367,6 @@ function makeDraggable(element){
 const closeBtn = document.getElementById("custom-close-btn");
 makeDraggable(closeBtn);
 closeBtn.addEventListener("click",()=>{ forceCloseGame(); });
-
-function moBangHuongDan(){ document.getElementById("guide-modal").style.display="flex"; }
-function dongBangHuongDan(){ document.getElementById("guide-modal").style.display="none"; }
 </script>
 </body>
 </html>

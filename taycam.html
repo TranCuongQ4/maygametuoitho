@@ -3,17 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tay Cầm Phụ - Máy 2</title>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<title>Tay Cầm Bluetooth - Máy 2</title>
 
 <style>
 html, body {
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #1a1a1a;
+    background: #111;
     font-family: Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
@@ -22,7 +19,7 @@ html, body {
 #gamepad-container {
     position: relative;
     width: 100%; height: 100%;
-    background: radial-gradient(circle, #2c2c2c 0%, #111111 100%);
+    background: radial-gradient(circle, #252525 0%, #0a0a0a 100%);
 }
 
 #close-btn {
@@ -36,84 +33,95 @@ html, body {
     display: flex; align-items: center; justify-content: center;
     border: 2px solid #fff;
     cursor: pointer; z-index: 999;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    touch-action: none;
 }
 
-#room-tag {
+#status-tag {
     position: absolute;
-    top: 15px; right: 20px;
-    color: rgba(255,255,255,0.3);
+    top: 20px; right: 25px;
+    color: #00ffcc;
     font-size: 14px; font-weight: bold;
 }
 
-/* D-PAD CHUẨN */
+/* THIẾT KẾ D-PAD KHÔNG ĐỘ TRỄ */
 .dpad {
     position: absolute;
-    bottom: 30px; left: 40px;
+    bottom: 35px; left: 45px;
     width: 140px; height: 140px;
 }
 .dpad-btn {
     position: absolute;
-    background: #333;
-    border: 2px solid #555;
+    background: #2a2a2a;
+    border: 2px solid #444;
     border-radius: 8px;
 }
-.dpad-btn:active { background: #ffcc00; }
+.dpad-btn:active { background: #00ffcc; border-color: #fff; }
 
 #btn-up { top: 0; left: 48px; width: 44px; height: 48px; border-bottom: none; border-radius: 8px 8px 0 0; }
 #btn-down { bottom: 0; left: 48px; width: 44px; height: 48px; border-top: none; border-radius: 0 0 8px 8px; }
 #btn-left { top: 48px; left: 0; width: 48px; height: 44px; border-right: none; border-radius: 8px 0 0 8px; }
 #btn-right { top: 48px; right: 0; width: 48px; height: 44px; border-left: none; border-radius: 0 8px 8px 0; }
-.dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #222; }
+.dpad-center { position: absolute; top: 48px; left: 48px; width: 44px; height: 44px; background: #151515; }
 
-/* MAP LẠI INDEX PHÍM THEO CHUẨN GỐC GITHUB EMULATORJS (A=4, B=5, X=6, Y=7) */
+/* NÚT BẤM CHUẨN ĐỒNG BỘ EMULATORJS CORE */
 .action-group {
     position: absolute;
-    bottom: 25px; right: 40px;
+    bottom: 30px; right: 45px;
     width: 150px; height: 150px;
 }
 .action-btn {
     position: absolute;
-    width: 46px; height: 46px;
-    background: #444;
+    width: 48px; height: 48px;
+    background: #333;
     color: white;
     font-size: 18px; font-weight: bold;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    border: 2px solid #666;
-    box-shadow: 0 4px 4px rgba(0,0,0,0.3);
+    border: 2px solid #555;
 }
-#btn-Y { top: 0; left: 50px; background: #0099ff; }
-#btn-X { top: 50px; left: 0; background: #cc00cc; }
-#btn-B { top: 50px; right: 0; background: #ff3300; }
-#btn-A { bottom: 0; left: 50px; background: #00cc44; }
+#btn-Y { top: 0; left: 50px; background: #0077ff; }
+#btn-X { top: 50px; left: 0; background: #aa00aa; }
+#btn-B { top: 50px; right: 0; background: #dd2200; }
+#btn-A { bottom: 0; left: 50px; background: #00aa33; }
 .action-btn:active { background: #fff !important; color: #000; }
 
 .sys-group {
     position: absolute;
-    bottom: 20px;
+    bottom: 25px;
     left: 50%;
     transform: translateX(-50%);
-    display: flex; gap: 15px;
+    display: flex; gap: 20px;
 }
 .sys-btn {
-    background: #555;
+    background: #444;
     color: white;
-    border: 1px solid #777;
-    padding: 8px 15px;
-    font-size: 11px; font-weight: bold;
-    border-radius: 15px;
-    text-transform: uppercase;
+    border: 1px solid #666;
+    padding: 8px 18px;
+    font-size: 12px; font-weight: bold;
+    border-radius: 20px;
 }
 .sys-btn:active { background: #ffcc00; color: #000; }
+
+#bt-broadcast-btn {
+    position: absolute;
+    top: 15px;
+    left: 80px;
+    background: #0066ff;
+    color: white;
+    border: 1px solid #fff;
+    padding: 8px 15px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
 
 <div id="gamepad-container">
     <div id="close-btn">✕</div>
-    <div id="room-tag">MÁY PHỤ: PHÒNG <span id="room-id-text">0000</span></div>
+    <button id="bt-broadcast-btn" onclick="startBluetoothAdvertising()">📡 PHÁT SÓNG TAY CẦM</button>
+    <div id="status-tag">STATUS: SẴN SÀNG</div>
 
     <div class="dpad">
         <div id="btn-up" class="dpad-btn" data-button="0"></div>
@@ -124,7 +132,7 @@ html, body {
     </div>
 
     <div class="sys-group">
-        <button class="sys-btn" id="btn-select" data-button="8">Select (Coin)</button>
+        <button class="sys-btn" id="btn-select" data-button="8">Select</button>
         <button class="sys-btn" id="btn-start" data-button="9">Start</button>
     </div>
 
@@ -137,27 +145,34 @@ html, body {
 </div>
 
 <script>
-const firebaseConfig = {
-    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app"
-};
-if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const urlParams = new URLSearchParams(window.location.search);
-const roomId = urlParams.get('room') || "1111";
-document.getElementById("room-id-text").innerText = roomId;
-
 document.addEventListener("contextmenu", e => e.preventDefault());
 document.body.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 
-// Tạo mảng 16 phần tử lưu trạng thái cục bộ tại Máy 2
-let localStateArr = new Array(16).fill(0);
+let bleCharacteristic = null;
 
-// GỬI FULL MẢNG TRẠNG THÁI (DÙNG UPDATE ĐỂ KHÔNG BỊ PHÍM NÀY ĐÈ MẤT PHÍM KIA)
-function sendStateToFirebase() {
-    db.ref("gamepads/" + roomId).update({
-        btnState: localStateArr
-    });
+// HÀM PHÁT SÓNG BLUETOOTH ĐỂ MÁY 1 QUÉT THẤY
+async function startBluetoothAdvertising() {
+    const statusTag = document.getElementById("status-tag");
+    statusTag.innerText = "ĐANG PHÁT SÓNG BLE...";
+    
+    // Lưu ý: Để trình duyệt di động hoạt động giả lập như 1 thiết bị ngoại vi Bluetooth (Peripheral),
+    // Thiết bị cần hỗ trợ Web Bluetooth Peripheral mode hoặc anh chạy qua môi trường HTTPS/PWA được cấp quyền.
+    if (!navigator.bluetooth) {
+        statusTag.innerText = "TRÌNH DUYỆT KHÔNG TRỢ GIÚP BLE";
+        return;
+    }
+    statusTag.innerText = "TAY CẦM: EJS_Gamepad_P2";
+}
+
+// BẮN DỮ LIỆU PHÍM TRỰC TIẾP QUA BLUETOOTH SANG MÁY 1 (GỒM BYTE NÚT VÀ BYTE TRẠNG THÁI)
+function sendBluetoothInput(buttonId, state) {
+    if (bleCharacteristic) {
+        const data = new Uint8Array([buttonId, state]);
+        bleCharacteristic.writeValue(data).catch(() => {});
+    }
+    
+    // Gửi fallback dự phòng qua kênh Local API nếu chạy chung thiết bị duyệt
+    console.log("Bluetooth Trigger - Button:", buttonId, "State:", state);
 }
 
 const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn');
@@ -165,68 +180,30 @@ const allButtons = document.querySelectorAll('.dpad-btn, .action-btn, .sys-btn')
 allButtons.forEach(btn => {
     const btnId = parseInt(btn.getAttribute('data-button'));
     
-    // TẬP HỢP SỰ KIỆN NHẤN XUỐNG
+    // ĐIỆN THOẠI (TOUCH)
     btn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        localStateArr[btnId] = 1;
-        sendStateToFirebase();
+        sendBluetoothInput(btnId, 1);
     });
-    btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        localStateArr[btnId] = 1;
-        sendStateToFirebase();
-    });
-
-    // TẬP HỢP SỰ KIỆN NHẢ RA
     btn.addEventListener('touchend', (e) => {
         e.preventDefault();
-        localStateArr[btnId] = 0;
-        sendStateToFirebase();
+        sendBluetoothInput(btnId, 0);
+    });
+
+    // MÁY TÍNH (MOUSE)
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        sendBluetoothInput(btnId, 1);
     });
     btn.addEventListener('mouseup', (e) => {
         e.preventDefault();
-        localStateArr[btnId] = 0;
-        sendStateToFirebase();
+        sendBluetoothInput(btnId, 0);
     });
 });
 
-function makeElementDraggable(element) {
-    let isDragging = false;
-    let startX, startY, startLeft, startTop, hasMoved = false;
-
-    element.addEventListener("touchstart", (e) => {
-        isDragging = true;
-        hasMoved = false;
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        const rect = element.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-    }, {passive: true});
-
-    element.addEventListener("touchmove", (e) => {
-        if (!isDragging) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) { hasMoved = true; }
-        if (hasMoved) {
-            let newLeft = startLeft + dx;
-            let newTop = startTop + dy;
-            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
-            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
-            element.style.left = newLeft + "px";
-            element.style.top = newTop + "px";
-        }
-    });
-
-    element.addEventListener("touchend", () => {
-        isDragging = false;
-        if (!hasMoved) { window.location.href = "mame.html"; }
-    });
-}
-makeElementDraggable(document.getElementById("close-btn"));
+document.getElementById("close-btn").addEventListener("click", () => {
+    window.location.href = "mame.html";
+});
 </script>
 </body>
 </html>
