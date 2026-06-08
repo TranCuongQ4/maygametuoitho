@@ -16,6 +16,9 @@ let currentRoomId = null;
 let isOnlineMode = false;
 let myRole = ""; // "host" hoặc "guest"
 
+// Hàng đợi lưu tạm thời các ICE Candidate nếu nó đến quá sớm khi chưa setRemoteDescription
+let pendingCandidates = [];
+
 // Cấu hình STUN server miễn phí của Google để tìm kiếm địa chỉ IP WAN P2P
 const rtcConfig = {
     iceServers: [
@@ -53,6 +56,7 @@ function createOnlineRoom() {
     isOnlineMode = true;
     isHost = true;
     myRole = "host";
+    pendingCandidates = []; // Reset hàng đợi candidates
     
     // Tạo ID phòng ngẫu nhiên gồm 6 chữ số
     currentRoomId = Math.floor(100000 + Math.random() * 900000);
@@ -80,6 +84,9 @@ function createOnlineRoom() {
             document.getElementById("connection-status").textContent = "🟢 Đã kết nối thành công! Trận đấu bắt đầu...";
             document.getElementById("connection-status").style.color = "#00ffcc";
             
+            // Xử lý toàn bộ các candidate bị dồn ứ trong hàng đợi sau khi setRemoteDescription thành công
+            processPendingCandidates();
+
             // Đợi 1 giây cho đường ống mạng ổn định rồi kích hoạt màn hình game
             setTimeout(() => {
                 closeOnlineModal();
@@ -92,12 +99,27 @@ function createOnlineRoom() {
     roomRef.child("guestCandidates").on("child_added", (snapshot) => {
         const candidate = snapshot.val();
         if (candidate && peerConnection) {
-            peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            // SỬA LỖI CHÍNH TẠI ĐÂY: Nếu chưa cấu hình remote description thì nạp vào hàng đợi chờ xử lý sau
+            if (!peerConnection.remoteDescription) {
+                pendingCandidates.push(candidate);
+            } else {
+                peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi addIceCandidate:", e));
+            }
         }
     });
 
     // Khởi tạo quy trình WebRTC Web Connection
     setupWebRTC(roomRef);
+}
+
+// Hàm giải phóng hàng đợi candidate
+function processPendingCandidates() {
+    if (peerConnection && peerConnection.remoteDescription) {
+        while (pendingCandidates.length > 0) {
+            const candidate = pendingCandidates.shift();
+            peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi giải phóng Candidate:", e));
+        }
+    }
 }
 
 // Hàm sao chép link phòng nhanh
@@ -112,6 +134,7 @@ function copyRoomLink() {
 // --- CHỨC NĂNG 2: THAM GIA PHÒNG (DÀNH CHO KHÁCH - GUEST) ---
 async function joinOnlineRoom(roomId, gameUrl) {
     const roomRef = db.ref("rooms/" + roomId);
+    pendingCandidates = []; // Reset hàng đợi candidates
     
     // Đọc thông tin phòng từ Firebase để lấy chuẩn file ROM đồng bộ với chủ phòng
     roomRef.once("value", async (snapshot) => {
@@ -136,7 +159,6 @@ async function joinOnlineRoom(roomId, gameUrl) {
         // Gửi thông tin định vị mạng ICE lên Firebase cho Host nhận diện
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                // SỬA LỖI: Chuyển đổi candidate an toàn không dùng toJSON() trực tiếp
                 const candidateObj = JSON.parse(JSON.stringify(event.candidate));
                 roomRef.child("guestCandidates").push(candidateObj);
             }
@@ -151,15 +173,22 @@ async function joinOnlineRoom(roomId, gameUrl) {
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         
-        // SỬA LỖI: Chuyển đổi answer object an toàn để lưu lên Firebase
         const answerObj = JSON.parse(JSON.stringify(answer));
         await roomRef.update({ answer: answerObj, status: "connected" });
+
+        // Sau khi đã setRemoteDescription xong, xử lý giải phóng các candidate nếu có
+        processPendingCandidates();
 
         // Lắng nghe mã định vị ICE của Host
         roomRef.child("hostCandidates").on("child_added", (snapshot) => {
             const candidate = snapshot.val();
             if (candidate && peerConnection) {
-                peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                // SỬA LỖI CHÍNH TẠI ĐÂY: Tránh nạp đè lúc remote description chưa sẵn sàng
+                if (!peerConnection.remoteDescription) {
+                    pendingCandidates.push(candidate);
+                } else {
+                    peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log("Lỗi addIceCandidate:", e));
+                }
             }
         });
     });
@@ -176,7 +205,6 @@ async function setupWebRTC(roomRef) {
     // Gửi thông tin định vị mạng ICE của Host lên Firebase
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            // SỬA LỖI: Chuyển đổi candidate sang object an toàn
             const candidateObj = JSON.parse(JSON.stringify(event.candidate));
             roomRef.child("hostCandidates").push(candidateObj);
         }
@@ -186,7 +214,6 @@ async function setupWebRTC(roomRef) {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
     
-    // SỬA LỖI CHÍNH TẠI ĐÂY: Loại bỏ offer.toJSON(), dùng cấu trúc parse an toàn chạy được mọi trình duyệt
     const offerObj = JSON.parse(JSON.stringify(offer));
     await roomRef.update({ offer: offerObj });
 }
