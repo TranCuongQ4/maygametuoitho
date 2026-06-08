@@ -64,7 +64,6 @@ window.addEventListener("DOMContentLoaded", () => {
         isHost = false;
         myRole = "guest";
         
-        // Máy 2 vào cái là tự nạp game của mình luôn để sẵn sàng, không cần đợi Host gồng dữ liệu ban đầu
         const modal = document.getElementById("online-modal");
         if(modal) modal.style.display = "flex";
         
@@ -80,7 +79,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// --- CHỨC NĂNG 1: TẠO PHÒNG VÀ VÀO GAME LUÔN KHÔNG ĐỢI LINK (DÀNH CHO MÁY 1) ---
+// --- CHỨC NĂNG 1: TẠO PHÒNG (GIỮ NGUYÊN GIAO DIỆN ĐỂ BẤM COPY) ---
 function createOnlineRoom() {
     isOnlineMode = true;
     isHost = true;
@@ -89,10 +88,23 @@ function createOnlineRoom() {
     
     if (peerConnection) { try { peerConnection.close(); } catch(e){} }
     
-    // Tạo ID phòng và link kết nối
+    // Tự động dọn dẹp các phòng cũ bị bỏ quên quá 12 tiếng
+    const now = Date.now();
+    db.ref("rooms").once("value", (snapshot) => {
+        const rooms = snapshot.val();
+        if (rooms) {
+            Object.keys(rooms).forEach(id => {
+                if (!rooms[id].createdAt || (now - rooms[id].createdAt) > 12 * 60 * 60 * 1000) {
+                    db.ref("rooms/" + id).remove();
+                }
+            });
+        }
+    });
+
     currentRoomId = Math.floor(100000 + Math.random() * 900000);
     const roomRef = db.ref("rooms/" + currentRoomId);
     
+    // Tạo link kết nối và hiển thị lên giao diện cho anh copy
     const roomLink = `${window.location.origin}${window.location.pathname}?room=${currentRoomId}&game=${encodeURIComponent(currentSelectedRomUrl)}`;
     document.getElementById("room-link-input").value = roomLink;
     document.getElementById("room-info-section").style.display = "block";
@@ -104,10 +116,7 @@ function createOnlineRoom() {
         createdAt: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // 🔥 HÀNH ĐỘNG QUAN TRỌNG: Host kích hoạt vào game ngay lập tức, không đợi link kia click!
-    console.log("🚀 Host chủ động vào game trước...");
-    if (typeof closeOnlineModal === "function") closeOnlineModal();
-    startGame(currentSelectedRomUrl, currentSelectedRomName);
+    // KHÔNG gọi hàm startGame() ở đây nữa để tránh việc nhảy vào game che khuất mất link của anh!
 
     // Lắng nghe tín hiệu từ Máy 2 khi họ click vào link sau đó
     roomRef.child("answer").on("value", async (snapshot) => {
@@ -134,6 +143,25 @@ function createOnlineRoom() {
     setupWebRTC(roomRef);
 }
 
+// 🔥 SỬA ĐỔI QUAN TRỌNG: BẤM COPY XONG LÀ TỰ ĐỘNG KHỞI ĐỘNG VÀO GAME LUÔN!
+function copyRoomLink() {
+    const copyText = document.getElementById("room-link-input");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    
+    alert("Đã sao chép link phòng! Giờ hệ thống sẽ tự động đưa bạn vào game trước.");
+
+    // Tiến hành ẩn modal và kích hoạt vào game ngay sau khi đã có link trong bộ nhớ tạm
+    if (typeof closeOnlineModal === "function") closeOnlineModal();
+    
+    const emulatorEl = document.querySelector("#emulator");
+    if (!emulatorEl || emulatorEl.innerHTML === "") {
+        console.log("🚀 Host bắt đầu tải game chạy trước...");
+        startGame(currentSelectedRomUrl, currentSelectedRomName);
+    }
+}
+
 function processPendingCandidates() {
     if (peerConnection && peerConnection.remoteDescription) {
         while (pendingCandidates.length > 0) {
@@ -141,13 +169,6 @@ function processPendingCandidates() {
             peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {});
         }
     }
-}
-
-function copyRoomLink() {
-    const copyText = document.getElementById("room-link-input");
-    copyText.select();
-    navigator.clipboard.writeText(copyText.value);
-    alert("Đã sao chép link phòng! Hãy gửi cho máy 2 vào sau.");
 }
 
 // --- CHỨC NĂNG 2: THAM GIA PHÒNG (MÁY 2 - GUEST VÀO SAU) ---
@@ -239,7 +260,6 @@ function setupDataChannelEvents() {
         if (msg.type === "p2p_share_state") {
             if (window.EJS_emulator && window.EJS_emulator.gameManager) {
                 try {
-                    // Ép nạp khung hình đồng bộ từ đối phương gửi sang để tránh lệch mạng
                     window.EJS_emulator.gameManager.loadState(new Uint8Array(msg.gameState));
                 } catch(e){}
             }
@@ -293,7 +313,7 @@ function handleStrictKeyEvent(event, value) {
     const buttonId = KEY_TO_BUTTON_ID[pressedKey];
 
     if (isHost) {
-        // MÁY 1 (HOST): Chỉ bấm dải phím P1 (Mũi tên, Z, X...) và kích hoạt Player 1 tại máy mình
+        // MÁY 1 (HOST): Chỉ bấm dải phím P1 và kích hoạt Player 1 tại máy mình
         if (P1_KEYS.includes(pressedKey)) {
             executeDirectGamepadInput(1, buttonId, value);
 
@@ -306,7 +326,7 @@ function handleStrictKeyEvent(event, value) {
             }));
         }
     } else {
-        // MÁY 2 (GUEST): Người vào sau bấm phím di chuyển (vẫn bấm dải mũi tên) nhưng hệ thống ÉP THÀNH PLAYER 2
+        // MÁY 2 (GUEST): Người vào sau bấm phím di chuyển hệ thống ÉP THÀNH PLAYER 2
         let keyIndex = P1_KEYS.indexOf(pressedKey);
         if (keyIndex !== -1) {
             let mappedP2Key = P2_KEYS[keyIndex];
