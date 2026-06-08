@@ -210,7 +210,63 @@ h1{
     width:90%;
 }
 
+/* KHU VỰC ĐIỀU PHỐI KẾT NỐI WEBRTC */
+.webrtc-panel {
+    background: #1e2530;
+    border: 2px solid #30363d;
+    border-radius: 14px;
+    padding: 15px;
+    width: 90%;
+    max-width: 340px;
+    margin: 10px 0 15px 0;
+    text-align: center;
+    box-sizing: border-box;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.webrtc-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffcc00;
+    margin-bottom: 10px;
+}
+.webrtc-btn-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+.sub-btn {
+    flex: 1;
+    background: #2a3241;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 10px 5px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.sub-btn:active {
+    background: #ffcc00;
+    color: #000;
+}
+.btn-host { border-color: #00ffcc; color: #00ffcc; }
+.btn-client { border-color: #ff3366; color: #ff3366; }
+#qrcode-area {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #444;
+}
+#qrcode {
+    background: white;
+    padding: 8px;
+    display: inline-block;
+    border-radius: 8px;
+    margin-top: 5px;
+}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -226,13 +282,23 @@ h1{
         🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!
     </div>
 
+    <div class="webrtc-panel">
+        <div class="webrtc-title">🔗 KẾT NỐI TAY CẦM PLAYER 2</div>
+        <div class="webrtc-btn-group">
+            <button class="sub-btn btn-host" onclick="kichHoatMayChuPC()">LÀM MÁY CHỦ (HIỆN QR)</button>
+            <button class="sub-btn btn-client" onclick="window.location.href='taycam.html'">LÀM MÁY PHỤ (VÀO TAY CẦM)</button>
+        </div>
+        
+        <div id="qrcode-area">
+            <div id="status-text" style="font-size: 12px; color: #aaa;">Đang tạo phòng...</div>
+            <div id="qrcode"></div>
+            <div style="font-size: 11px; color: #00ffcc; margin-top: 6px;">Lấy máy phụ bấm nút màu đỏ ở trên rồi quét mã này!</div>
+        </div>
+    </div>
+
     <button class="btn btn-back"
         onclick="window.location.href='index.html'">
         ← Trở Về Game Băng Đĩa
-    </button>
-
-    <button class="btn" onclick="window.location.href='taycam.html'" style="background: linear-gradient(145deg, #3a0f5c, #22053a); border: 2px solid #b300ff; color: #cc66ff;">
-        🎮 Kích Hoạt Tay Cầm Phụ 🎮
     </button>
 
     <button class="btn"
@@ -450,7 +516,6 @@ function loadDino(){
     startGame("roms/dino.zip");
 }
 
-// LẮNG NGHE CHỌN FILE TỪ MÁY
 document
 .getElementById("romInput")
 .addEventListener("change",function(e){
@@ -460,22 +525,16 @@ document
     startGame(URL.createObjectURL(file), file.name);
 });
 
-// HÀM XỬ LÝ NẠP FILE TỪ LINK WEB & ÉP CORS BYPASS
 function loadRomFromLink() {
     let urlInput = prompt("Hãy dán đường dẫn link trực tiếp (.zip) của file ROM vào đây:", "Link bên chổ trang web mở ra đó , bạn dán Link game nào chơi vào đây");
-    
-    // Nếu người dùng nhấn Cancel (No) hoặc không nhập gì thì dừng lại, trở lại giao diện cũ
     if (!urlInput) return;
-    
     let trimmedUrl = urlInput.trim();
     if (trimmedUrl === "") return;
 
-    // GIẢI PHÁP SỬA LỖI CORS: Nếu phát hiện là link archive.org/download/, chuyển sang cấu trúc archive.org/cors/
     if(trimmedUrl.includes("archive.org/download/")) {
         trimmedUrl = trimmedUrl.replace("archive.org/download/", "archive.org/cors/");
     }
 
-    // Tự động bóc tách tên file từ đuôi link để lấy Game ID định danh cấu trúc
     let detectedName = "";
     try {
         const parts = trimmedUrl.split('/');
@@ -499,12 +558,9 @@ function startGame(romUrl, romName = ""){
     '<div id="emulator"></div>';
 
     window.EJS_player="#emulator";
-
     window.EJS_core="arcade";
-
     window.EJS_gameUrl=romUrl;
 
-    // Nếu có tên file, gán vào EJS_gameName để ép định danh lõi MAME xử lý mảng zip bộ nhớ
     if(romName !== "") {
         window.EJS_gameName = romName;
     } else {
@@ -518,38 +574,27 @@ function startGame(romUrl, romName = ""){
     "https://cdn.emulatorjs.org/stable/data/cores/";
 	
 	window.EJS_language = "en";
-
     window.EJS_startOnLoaded=true;
 
     window.dispatchEvent(new Event("resize"));
 
     if(!isLoaderScriptLoaded){
-
         const script=
         document.createElement("script");
-
         script.src=
         "https://cdn.emulatorjs.org/stable/data/loader.js";
-
         script.onload=function(){
             isLoaderScriptLoaded=true;
         };
-
         document.head.appendChild(script);
-
     }else{
-
         if(typeof EJS_Emulator==="function"){
-
             new EJS_Emulator(
                 document.getElementById("emulator"),
                 window
             );
-
         }else{
-
             window.location.reload();
-
         }
     }
 }
@@ -559,13 +604,10 @@ function forceCloseGame(){
 }
 
 function makeDraggable(element){
-
     let isDragging = false;
     let startX, startY;
     let startLeft, startTop;
     let hasMoved = false;
-
-    /* TOUCH */
 
     element.addEventListener("touchstart",(e)=>{
         isDragging = true;
@@ -614,8 +656,6 @@ function makeDraggable(element){
     element.addEventListener("touchcancel",()=>{
         isDragging = false;
     });
-
-    /* MOUSE */
 
     element.addEventListener("mousedown",(e)=>{
         e.preventDefault();
@@ -669,7 +709,97 @@ function dongBangHuongDan(){
     document.getElementById("guide-modal").style.display="none";
 }
 
-</script>
+// --- LOGIC XỬ LÝ WEBRTC MÁY CHỦ ---
+let peerConnection;
+let dataChannel;
+let qrcodeCreated = false;
+const roomId = Math.floor(1000 + Math.random() * 9000).toString(); // Mã phòng ngẫu nhiên 4 số
+const topic = `trancuong_mame_webrtc_${roomId}`;
 
+function kichHoatMayChuPC() {
+    // Hiện vùng chứa mã QR lên
+    document.getElementById("qrcode-area").style.display = "block";
+    const statusText = document.getElementById("status-text");
+    
+    if(!qrcodeCreated) {
+        // Tạo mã QR chứa ID phòng
+        new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
+        statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
+        qrcodeCreated = true;
+        langNgheTinHieuAndroid();
+    }
+}
+
+function initWebRTC() {
+    peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    peerConnection.onicecandidate = e => {
+        if (e.candidate) {
+            guiTinHieu({ type: 'candidate', candidate: e.candidate });
+        }
+    };
+
+    peerConnection.ondatachannel = e => {
+        dataChannel = e.channel;
+        thietLapDataChannel();
+    };
+}
+
+function thietLapDataChannel() {
+    const statusText = document.getElementById("status-text");
+    dataChannel.onopen = () => {
+        statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2!</span>";
+        document.getElementById("qrcode").style.display = "none";
+    };
+    dataChannel.onclose = () => {
+        statusText.innerText = "❌ Mất kết nối Player 2. Đang chờ quét lại...";
+        document.getElementById("qrcode").style.display = "inline-block";
+    };
+    dataChannel.onmessage = e => {
+        const data = JSON.parse(e.data);
+        if (data.sender === "EmulatorJS_P2") {
+            const targetEl = document.getElementById("emulator") || window;
+            if (targetEl) {
+                targetEl.dispatchEvent(new KeyboardEvent(data.type, {
+                    key: data.key,
+                    keyCode: data.keyCode,
+                    code: data.key,
+                    bubbles: true,
+                    view: window
+                }));
+            }
+        }
+    };
+}
+
+async function guiTinHieu(msg) {
+    await fetch(`https://pubsub.pubnub.com/publish/pub-c-9c0eb692-a1b4-4ef8-8b01-c88f1dc67660/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/0/${topic}/0`, {
+        method: "POST",
+        body: JSON.stringify(msg)
+    });
+}
+
+function langNgheTinHieuAndroid() {
+    const sse = new EventSource(`https://pubsub.pubnub.com/v2/subscribe/sub-c-5727e1f4-9426-11eb-980b-2244bbd279cf/${topic}/0?heartbeat=30`);
+    sse.onmessage = async function(e) {
+        const rawData = JSON.parse(e.data);
+        const msg = rawData.m;
+        if (!msg || msg.from === 'PC') return;
+
+        if (!peerConnection) initWebRTC();
+
+        if (msg.type === 'offer') {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(msg.offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            guiTinHieu({ type: 'answer', answer: answer, from: 'PC' });
+        } else if (msg.type === 'candidate' && peerConnection.remoteDescription) {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+        }
+    };
+}
+</script>
 </body>
 </html>
