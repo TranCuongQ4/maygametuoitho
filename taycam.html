@@ -3,88 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Kết Nối Tay Cầm Bluetooth</title>
+<title>Tay Cầm Ảo - Player 2</title>
 <style>
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
 html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #0d1117;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #fff;
+    background: #161b22;
+    font-family: Arial, sans-serif;
+}
+body {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+/* Thanh trạng thái phía trên */
+.header-status {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    height: 40px;
+    border-bottom: 1px solid #30363d;
+}
+.status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #ff3366;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+.connected .status-dot {
+    background: #00ffcc;
 }
 
-.container {
-    text-align: center;
-    padding: 30px;
-    background: rgba(22, 27, 34, 0.8);
-    border: 2px solid #00ffcc;
-    border-radius: 20px;
-    box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
-    width: 85%;
-    max-width: 450px;
+/* Khu vực nút bấm chính */
+.gamepad-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+    width: 100%;
 }
 
-h2 {
-    color: #00ffcc;
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+/* Cụm nút di chuyển D-PAD bên trái */
+.dpad {
+    position: relative;
+    width: 160px;
+    height: 160px;
 }
-
-.status-box {
-    background: #161b22;
-    border: 1px solid #30363d;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 20px 0;
-    font-size: 15px;
-    min-height: 60px;
+.dpad-btn {
+    position: absolute;
+    background: #21262d;
+    border: 2px solid #30363d;
+    color: #8b949e;
+    font-weight: bold;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #8b949e;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
+.dpad-btn:active, .dpad-btn.active {
+    background: #00ffcc;
+    color: #000;
+    border-color: #fff;
+}
+.dpad-up { top: 0; left: 55px; width: 50px; height: 55px; border-bottom: none; border-radius: 10px 10px 0 0; }
+.dpad-down { bottom: 0; left: 55px; width: 50px; height: 55px; border-top: none; border-radius: 0 0 10px 10px; }
+.dpad-left { top: 55px; left: 0; width: 55px; height: 50px; border-right: none; border-radius: 10px 0 0 10px; }
+.dpad-right { top: 55px; right: 0; width: 55px; height: 50px; border-left: none; border-radius: 0 10px 10px 0; }
+.dpad-center { top: 55px; left: 55px; width: 50px; height: 50px; background: #30363d; border: none; border-radius: 0; }
 
-.connected {
-    color: #2ea44f;
-    border-color: #2ea44f;
+/* Cụm nút chức năng ở giữa (Select/Start) */
+.center-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.sys-btn {
+    background: #21262d;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 11px;
     font-weight: bold;
-    text-shadow: 0 0 5px rgba(46, 164, 79, 0.3);
+    letter-spacing: 1px;
+    text-align: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+.sys-btn:active {
+    background: #ffcc00;
+    color: #000;
 }
 
-.hint {
-    font-size: 13px;
-    color: #ffcc00;
-    line-height: 1.5;
+/* Cụm nút hành động bên phải (Chuẩn MAME/Arcade 6 nút) */
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.action-btn {
+    width: 55px;
+    height: 55px;
+    background: #21262d;
+    border: 2px solid #444;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+/* Đổi màu cụm nút cho giống máy game thùng siêu thị */
+.btn-z { border-color: #ff3366; color: #ff3366; }
+.btn-x { border-color: #ffcc00; color: #ffcc00; }
+.btn-a { border-color: #00ffcc; color: #00ffcc; }
+.btn-s { border-color: #3399ff; color: #3399ff; }
+.btn-q { border-color: #9933ff; color: #9933ff; }
+.btn-e { border-color: #ffffff; color: #ffffff; }
+
+.action-btn:active {
+    background: currentColor !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px currentColor;
 }
 
-/* NÚT X ĐỎ DI CHUYỂN ĐƯỢC */
 #custom-close-btn {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 15px;
+    right: 20px;
     z-index: 100000;
     background-color: rgba(255, 51, 102, .9);
     color: white;
-    border: 2px solid rgba(255, 255, 255, .5);
+    border: 1px solid rgba(255, 255, 255, .5);
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    user-select: none;
-    touch-action: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, .5);
 }
 </style>
 </head>
@@ -92,181 +170,119 @@ h2 {
 
 <div id="custom-close-btn">✕</div>
 
-<div class="container">
-    <h2>Trạm Kết Nối Tay Cầm</h2>
-    <p style="font-size: 14px; color: #aaa;">Hỗ trợ kết nối Bluetooth / Không dây / USB</p>
-    
-    <div id="status" class="status-box">
-        Chưa tìm thấy thiết bị. Hãy kết nối Bluetooth tay cầm với máy tính...
+<div class="header-status" id="status-bar">
+    <div>🎮 VỊ TRÍ: <span style="color: #ffcc00; font-weight:bold;">TAY CẦM PLAYER 2</span></div>
+    <div id="connection-text"><span class="status-dot"></span>Đang chờ máy chủ (mame.html)...</div>
+</div>
+
+<div class="gamepad-area">
+    <div class="dpad">
+        <div class="dpad-btn dpad-up" data-key="ArrowUp" data-code="38">▲</div>
+        <div class="dpad-btn dpad-left" data-key="ArrowLeft" data-code="37">◀</div>
+        <div class="dpad-btn dpad-center"></div>
+        <div class="dpad-btn dpad-right" data-key="ArrowRight" data-code="39">▶</div>
+        <div class="dpad-btn dpad-down" data-key="ArrowDown" data-code="40">▼</div>
     </div>
 
-    <div class="hint">
-        💡 <b>Mẹo nhỏ:</b> Sau khi kết nối Bluetooth thành công trên Windows, hãy <b>bấm thử vài nút bất kỳ</b> trên thiết bị để trình duyệt kích hoạt nhận diện tín hiệu!
+    <div class="center-controls">
+        <div class="sys-btn" data-key="v" data-code="86">SELECT (NẠP THẺ)</div>
+        <div class="sys-btn" data-key="Enter" data-code="13">START (CHƠI)</div>
+    </div>
+
+    <div class="action-buttons">
+        <div class="action-btn btn-a" data-key="a" data-code="65">X</div>
+        <div class="action-btn btn-s" data-key="s" data-code="83">Y</div>
+        <div class="action-btn btn-q" data-key="q" data-code="81">L1</div>
+        <div class="action-btn btn-z" data-key="z" data-code="90">A</div>
+        <div class="action-btn btn-x" data-key="x" data-code="88">B</div>
+        <div class="action-btn btn-e" data-key="e" data-code="69">R1</div>
     </div>
 </div>
 
 <script>
-// --- CHỨC NĂNG 1: XỬ LÝ LẮNG NGHE KẾT NỐI TAY CẦM BẤT KỲ THIẾT BỊ NÀO ---
-let gamepadIdx = null;
-let loopFrame = null;
-const keyStates = {};
-const statusDiv = document.getElementById("status");
+const statusBar = document.getElementById("status-bar");
+const connectionText = document.getElementById("connection-text");
 
-window.addEventListener("gamepadconnected", (e) => {
-    gamepadIdx = e.gamepad.index;
-    statusDiv.innerHTML = `✅ Đã nhận diện thiết bị thành công:<br><span style="color:#00ffcc">${e.gamepad.id}</span>`;
-    statusDiv.classList.add("connected");
-    startScanning();
-});
-
-window.addEventListener("gamepaddisconnected", (e) => {
-    if (gamepadIdx === e.gamepad.index) {
-        gamepadIdx = null;
-        statusDiv.innerHTML = "❌ Thiết bị đã ngắt kết nối hoặc rơi vào trạng thái ngủ.";
-        statusDiv.classList.remove("connected");
-        cancelAnimationFrame(loopFrame);
-    }
-});
-
-function startScanning() {
-    if (gamepadIdx === null) return;
-    const gp = navigator.getGamepads()[gamepadIdx];
-    if (!gp) return;
-
-    // Ánh xạ phím bấm hệ thống giả lập cho lõi game nhận diện
-    gp.buttons.forEach((btn, index) => {
-        let isDown = btn.pressed;
-        switch(index) {
-            case 0: sendKey(isDown, "z", 90); break;     // BUTTON_1
-            case 1: sendKey(isDown, "x", 88); break;     // BUTTON_2
-            case 2: sendKey(isDown, "a", 65); break;     // BUTTON_3
-            case 3: sendKey(isDown, "s", 83); break;     // BUTTON_4
-            case 4: sendKey(isDown, "q", 81); break;     // L1
-            case 5: sendKey(isDown, "e", 69); break;     // R1
-            case 8: sendKey(isDown, "v", 86); break;     // SELECT (Nạp thẻ)
-            case 9: sendKey(isDown, "Enter", 13); break; // START (Vào game)
-        }
-    });
-
-    // Xử lý các trục điều hướng D-pad hoặc cần Analog Trái
-    if (gp.axes.length >= 2) {
-        const x = gp.axes[0];
-        const y = gp.axes[1];
-        const deadZone = 0.5;
-
-        sendKey(x < -deadZone, "ArrowLeft", 37);
-        sendKey(x > deadZone, "ArrowRight", 39);
-        sendKey(y < -deadZone, "ArrowUp", 38);
-        sendKey(y > deadZone, "ArrowDown", 40);
-    }
-
-    loopFrame = requestAnimationFrame(startScanning);
+// Tự động kiểm tra luồng kết nối liên kết cửa sổ (nếu mở dạng Popup từ trang mame.html)
+if (window.opener) {
+    statusBar.classList.add("connected");
+    connectionText.innerHTML = '<span class="status-dot"></span>Đã liên kết link mẹ thành công!';
 }
 
-function sendKey(pressed, key, code) {
-    if (pressed && !keyStates[key]) {
-        keyStates[key] = true;
-        window.dispatchEvent(new KeyboardEvent("keydown", { key: key, keyCode: code, bubbles: true }));
-    } else if (!pressed && keyStates[key]) {
-        keyStates[key] = false;
-        window.dispatchEvent(new KeyboardEvent("keyup", { key: key, keyCode: code, bubbles: true }));
+// Hàm gửi lệnh phím bấm đồng bộ chuẩn mã EmulatorJS sang máy chủ
+function sendInput(type, key, code) {
+    const payload = {
+        sender: "EmulatorJS_P2",
+        type: type, // "keydown" hoặc "keyup"
+        key: key,
+        keyCode: parseInt(code)
+    };
+
+    // Cách 1: Gửi qua luồng cửa sổ liên kết trực tiếp (nếu mở tab song song)
+    if (window.opener) {
+        window.opener.postMessage(payload, "*");
     }
+    
+    // Cách 2: Phát quảng bá qua BroadcastChannel (Đề phòng chạy đa thiết bị cục bộ chung mạng)
+    const channel = new BroadcastChannel('emulatorjs_p2_channel');
+    channel.postMessage(payload);
+    channel.close();
 }
 
+// Lắng nghe sự kiện chạm tay vào màn hình cảm ứng (Hỗ trợ đa điểm mượt mà)
+const activeButtons = new Set();
 
-// --- CHỨC NĂNG 2: KÉO THẢ NÚT X ĐỎ DI CHUYỂN VÀ NHẤN ĐỂ QUAY VỀ MAME.HTML ---
-function makeDraggable(element){
-    let isDragging = false;
-    let startX, startY;
-    let startLeft, startTop;
-    let hasMoved = false;
-
-    /* TOUCH (Điện thoại) */
-    element.addEventListener("touchstart",(e)=>{
-        isDragging = true;
-        hasMoved = false;
-        const touch = e.touches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        const rect = element.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-    },{passive:true});
-
-    element.addEventListener("touchmove",(e)=>{
-        if(!isDragging) return;
-        const touch = e.touches[0];
-        const dx = touch.clientX - startX;
-        const dy = touch.clientY - startY;
-
-        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
-            hasMoved = true;
-        }
-
-        if(hasMoved){
-            if(e.cancelable){
-                e.preventDefault();
+function handleTouch(e) {
+    const currentTouches = new Set();
+    
+    // Quét qua toàn bộ danh sách các ngón tay đang chạm trên màn hình
+    for (let i = 0; i < e.touches.length; i++) {
+        const touch = e.touches[i];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (element && (element.classList.contains('dpad-btn') || element.classList.contains('action-btn') || element.classList.contains('sys-btn'))) {
+            const key = element.getAttribute('data-key');
+            if (key) {
+                currentTouches.add(element);
             }
-            let newLeft = startLeft + dx;
-            let newTop  = startTop + dy;
-
-            newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
-            newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
-
-            element.style.left = newLeft + "px";
-            element.style.top  = newTop + "px";
         }
-    },{passive:false});
-
-    element.addEventListener("touchend",()=>{
-        if(!isDragging) return;
-        isDragging = false;
-        if(!hasMoved){
-            window.location.href = 'mame.html';
+    }
+    
+    // Nhả các nút không còn được chạm
+    activeButtons.forEach(btn => {
+        if (!currentTouches.has(btn)) {
+            btn.classList.remove('active');
+            sendInput("keyup", btn.getAttribute('data-key'), btn.getAttribute('data-code'));
+            activeButtons.delete(btn);
         }
     });
-
-    /* MOUSE (Máy tính) */
-    element.addEventListener("mousedown",(e)=>{
-        e.preventDefault();
-        isDragging = true;
-        hasMoved = false;
-        startX = e.clientX;
-        startY = e.clientY;
-        const rect = element.getBoundingClientRect();
-        startLeft = rect.left;
-        startTop = rect.top;
-    });
-
-    window.addEventListener("mousemove",(e)=>{
-        if(!isDragging) return;
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-
-        if(Math.abs(dx) > 3 || Math.abs(dy) > 3){
-            hasMoved = true;
+    
+    // Kích hoạt các nút mới được chạm vào
+    currentTouches.forEach(btn => {
+        if (!activeButtons.has(btn)) {
+            btn.classList.add('active');
+            sendInput("keydown", btn.getAttribute('data-key'), btn.getAttribute('data-code'));
+            activeButtons.add(btn);
         }
-
-        let newLeft = startLeft + dx;
-        let newTop  = startTop + dy;
-
-        newLeft = Math.max(5, Math.min(window.innerWidth - element.offsetWidth - 5, newLeft));
-        newTop = Math.max(5, Math.min(window.innerHeight - element.offsetHeight - 5, newTop));
-
-        element.style.left = newLeft + "px";
-        element.style.top  = newTop + "px";
-    });
-
-    window.addEventListener("mouseup",()=>{
-        if (isDragging && !hasMoved) {
-            window.location.href = 'mame.html';
-        }
-        isDragging = false;
     });
 }
 
-const closeBtn = document.getElementById("custom-close-btn");
-makeDraggable(closeBtn);
+window.addEventListener('touchstart', handleTouch, { passive: false });
+window.addEventListener('touchmove', handleTouch, { passive: false });
+window.addEventListener('touchend', handleTouch, { passive: false });
+window.addEventListener('touchcancel', handleTouch, { passive: false });
+
+// Nút tắt thoát trang nhanh
+document.getElementById("custom-close-btn").addEventListener("click", () => {
+    window.close();
+});
+
+// Chặn zoom màn hình khi bấm nút liên tục trên điện thoại
+document.documentElement.addEventListener('touchstart', function (e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
 </script>
 </body>
 </html>
