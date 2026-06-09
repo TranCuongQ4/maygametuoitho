@@ -9,7 +9,7 @@
     box-sizing: border-box; 
     user-select: none; 
     -webkit-user-select: none; 
-    touch-action: none; /* Khóa toàn bộ cử chỉ cuộn/phóng to mặc định của trình duyệt */
+    touch-action: none;
 }
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #14171c; font-family: 'Segoe UI', Arial, sans-serif; }
 body { display: flex; flex-direction: column; justify-content: space-between; padding: 8px 16px; position: relative; }
@@ -18,7 +18,6 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 .status-dot { display: inline-block; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; margin-right: 5px; }
 .connected .status-dot { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
 
-/* Nút Vai L/R Thiết Kế Nổi Khối 3D Chuyên Nghiệp */
 .shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; }
 .shoulder-btn { 
     width: 110px; 
@@ -34,7 +33,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     justify-content: center; 
     box-shadow: 0 5px 0px #161a20, 0 6px 10px rgba(0,0,0,0.6);
     transition: all 0.05s ease;
-    touch-action: manipulation; /* Tối ưu hóa phản hồi chạm siêu tốc */
+    touch-action: manipulation;
 }
 .shoulder-btn:active, .shoulder-btn.active { 
     transform: translateY(4px);
@@ -45,7 +44,6 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 
 .gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 10px; }
 
-/* CỤM XOAY ANALOG JOYSTICK 3D SANG TRỌNG */
 .joystick-container {
     position: relative;
     width: 160px;
@@ -70,7 +68,6 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     transition: transform 0.05s ease;
 }
 
-/* HỆ THỐNG ĐIỀU KHIỂN TRUNG TÂM */
 .center-controls { display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .sys-btn { 
     background: linear-gradient(180deg, #323945, #1f242b); 
@@ -107,7 +104,6 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     box-shadow: 0 1px 0px #991b1b, 0 1px 3px rgba(0,0,0,0.4);
 }
 
-/* CỤM NÚT NHẤN SNES DIAMOND CHUẨN SƠ ĐỒ HÌNH ẢNH */
 .snes-diamond { position: relative; width: 170px; height: 170px; }
 .action-btn { 
     position: absolute; 
@@ -120,7 +116,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     align-items: center; 
     justify-content: center; 
     transition: all 0.05s ease;
-    touch-action: manipulation; /* Tăng tốc phản hồi chạm tức thì */
+    touch-action: manipulation;
 }
 
 /* Nút Y nằm ở TRÊN CÙNG (Màu Tím) */
@@ -161,7 +157,6 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     filter: brightness(1.2);
 }
 
-/* NÚT X ĐỎ 3D DI CHUYỂN KÉO THẢ TỰ DO ĐƯỢC */
 #floating-close-btn {
     position: absolute;
     top: 45px;
@@ -182,16 +177,14 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     cursor: move;
     transition: transform 0.05s ease;
 }
-
-#floating-close-btn:active {
-    filter: brightness(1.1);
-}
+#floating-close-btn:active { filter: brightness(1.1); }
 
 #camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; flex-direction: column; justify-content: center; align-items: center; }
 #reader { width: 260px; height: 260px; background: #000; border: 2px solid #00ffcc; border-radius: 8px; overflow: hidden; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -233,17 +226,30 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 </div>
 
 <script>
-let peer = null;
-let conn = null;
+// === FIREBASE RTDB - KẾT NỐI ỔN ĐỊNH ===
+const firebaseConfig = {
+    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 let html5QrcodeScanner = null;
+let currentRoomId = null;
+let roomRef = null;
+let isConnected = false;
+let keepAliveInterval = null;
 
 function moCameraQuet() {
     document.getElementById("camera-overlay").style.display = "flex";
     html5QrcodeScanner = new Html5Qrcode("reader");
     html5QrcodeScanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        (qrText) => { dongCameraQuet(); ketNoiMayChuPeerJS(qrText.trim()); },
+        { fps: 30, qrbox: { width: 200, height: 200 } },
+        (qrText) => { 
+            dongCameraQuet(); 
+            ketNoiPhong(qrText.trim()); 
+        },
         () => {}
     ).catch(() => {
         alert("Không mở được camera!");
@@ -256,40 +262,70 @@ function dongCameraQuet() {
     if (html5QrcodeScanner) { html5QrcodeScanner.stop().catch(()=>{}); }
 }
 
-function ketNoiMayChuPeerJS(roomId) {
-    const statusBar = document.getElementById("status-bar");
+function ketNoiPhong(roomId) {
     const statusText = document.getElementById("status-text");
-    statusText.innerText = `Đang kết nối cực nhanh...`;
-
-    if (peer) { peer.destroy(); }
-    peer = new Peer({ config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
-
-    peer.on('open', function() {
-        // Cấu hình reliable: false và ordered: false để truyền dữ liệu thời gian thực không trễ (tốc độ cao như UDP)
-        conn = peer.connect(`trancuong_mame_${roomId}`, { reliable: false, ordered: false });
-        conn.on('open', function() {
-            statusBar.classList.add("connected");
-            statusText.innerHTML = "<span class='status-dot'></span>TAY CẦM 0ms SẴN SÀNG!";
+    statusText.innerText = `Đang kết nối phòng ${roomId}...`;
+    
+    currentRoomId = roomId;
+    roomRef = database.ref(`game_rooms_mame/${roomId}`);
+    
+    // Kiểm tra phòng tồn tại
+    roomRef.once('value').then((snapshot) => {
+        const roomData = snapshot.val();
+        
+        if (!roomData) {
+            statusText.innerText = "❌ Phòng không tồn tại!";
+            return;
+        }
+        
+        // Đánh dấu player đã kết nối
+        roomRef.update({ 
+            playerConnected: true,
+            lastActive: firebase.database.ServerValue.TIMESTAMP
         });
-        conn.on('close', function() {
-            statusBar.classList.remove("connected");
-            statusText.innerText = "❌ Mất kết nối.";
+        
+        statusText.innerHTML = "<span class='status-dot'></span>TAY CẦM 0ms SẴN SÀNG!";
+        document.getElementById("status-bar").classList.add("connected");
+        isConnected = true;
+        
+        // Cập nhật thời gian hoạt động mỗi 30 giây
+        keepAliveInterval = setInterval(() => {
+            if (roomRef) {
+                roomRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+            }
+        }, 30000);
+        
+        // Lắng nghe khi phòng bị xóa (host thoát)
+        roomRef.on('value', (snapshot) => {
+            if (!snapshot.exists() && isConnected) {
+                statusText.innerHTML = "<span class='status-dot'></span>❌ Mất kết nối với máy chủ!";
+                document.getElementById("status-bar").classList.remove("connected");
+                isConnected = false;
+                if (keepAliveInterval) clearInterval(keepAliveInterval);
+            }
         });
+        
+    }).catch((err) => {
+        console.error("Lỗi kết nối:", err);
+        statusText.innerText = "❌ Lỗi kết nối!";
     });
 }
 
+// ===== GỬI LỆNH QUA FIREBASE =====
 function guiLenhPhim(type, key, keyCode, code) {
-    if (conn && conn.open) {
-        conn.send({
-            sender: "EmulatorJS_P2",
-            type: type,
-            key: key,
-            keyCode: parseInt(keyCode),
-            code: code
-        });
-    }
+    if (!isConnected || !currentRoomId) return;
+    
+    const commandRef = database.ref(`game_rooms_mame/${currentRoomId}/commands`).push();
+    commandRef.set({
+        type: type,
+        key: key,
+        keyCode: parseInt(keyCode),
+        code: code,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
 }
 
+// XỬ LÝ TOUCH
 const activeButtons = new Set();
 function handleTouch(e) {
     const currentTouches = new Set();
@@ -316,13 +352,12 @@ function handleTouch(e) {
     });
 }
 
-// Bắt sự kiện siêu nhạy bằng cách áp dụng passive: false kết hợp loại bỏ delay touch trên thiết bị di động
 window.addEventListener('touchstart', handleTouch, { passive: false });
 window.addEventListener('touchmove', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
 window.addEventListener('touchcancel', handleTouch, { passive: false });
 
-// LOGIC XOAY ANALOG JOYSTICK
+// JOYSTICK
 const joyContainer = document.getElementById('joy-container');
 const joyKnob = document.getElementById('joy-knob');
 let joystickActive = false;
@@ -410,7 +445,7 @@ function moveJoystick(touch) {
     updateJoystickKeys(nextKeys);
 }
 
-// LOGIC XỬ LÝ KÉO THẢ TỰ DO VÀ CHẠM CLICK NÚT X ĐỎ
+// NÚT ĐÓNG
 (function() {
     const closeBtn = document.getElementById("floating-close-btn");
     let isDragging = false;
@@ -473,6 +508,10 @@ function moveJoystick(touch) {
                 closeBtn.style.boxShadow = "0 5px 0px #990000, 0 6px 10px rgba(0,0,0,0.5)";
                 
                 if (!hasMoved) {
+                    if (roomRef) {
+                        roomRef.update({ playerConnected: false });
+                    }
+                    if (keepAliveInterval) clearInterval(keepAliveInterval);
                     window.location.href = "mame.html";
                 }
                 break;
@@ -481,62 +520,29 @@ function moveJoystick(touch) {
     });
 })();
 
+// Ngắt kết nối khi đóng trang
+window.addEventListener('beforeunload', () => {
+    if (roomRef) {
+        roomRef.update({ playerConnected: false });
+    }
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+    }
+});
+
 document.documentElement.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
-</script>
 
-<script>
-// 1. Chặn chuột phải
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-}, false);
-
-// 2. Chặn quét khối (bôi đen văn bản)
-document.addEventListener('selectstart', function(e) {
-    e.preventDefault();
-});
-
-// 3. Chặn các phím tắt copy/paste/save (F12, Ctrl+U, Ctrl+C, v.v.)
+// Chặn các phím tắt và menu chuột phải
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
+document.addEventListener('selectstart', function(e) { e.preventDefault(); });
 document.addEventListener('keydown', function(e) {
-    // Chặn F12
-    if (e.keyCode === 123) {
-        e.preventDefault();
-    }
-    // Chặn Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
-    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) {
-        e.preventDefault();
-    }
-    if (e.ctrlKey && e.keyCode === 85) {
-        e.preventDefault();
-    }
+    if (e.keyCode === 123) { e.preventDefault(); }
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) { e.preventDefault(); }
+    if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); }
+    if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 65)) { e.preventDefault(); }
 });
 </script>
-
-
-<script>
-// 1. Chặn chuột phải (Context Menu)
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-}, false);
-
-// 2. Chặn quét khối / bôi đen văn bản trên toàn trang
-document.addEventListener('selectstart', function(e) {
-    e.preventDefault();
-});
-
-// 3. Chặn các phím tắt copy/paste (không chặn F12)
-document.addEventListener('keydown', function(e) {
-    // Chặn Ctrl+U (xem nguồn trang)
-    if (e.ctrlKey && e.keyCode === 85) {
-        e.preventDefault();
-    }
-    // Chặn Ctrl+C, Ctrl+A (copy/chọn tất cả) nếu muốn
-    if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 65)) {
-        e.preventDefault();
-    }
-});
-</script>
-
 </body>
 </html>

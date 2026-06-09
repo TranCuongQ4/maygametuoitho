@@ -231,7 +231,8 @@ h1{
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -247,7 +248,7 @@ h1{
             <button class="sub-btn btn-client" onclick="window.location.href='taycam.html'">LÀM MÁY PHỤ (VÀO TAY CẦM)</button>
         </div>
         <div id="qrcode-area">
-            <div id="status-text" style="font-size: 12px; color: #aaa;">Đang kết nối Server luồng...</div>
+            <div id="status-text" style="font-size: 12px; color: #aaa;">Đang khởi tạo máy chủ...</div>
             <div id="qrcode"></div>
             <div style="font-size: 11px; color: #00ffcc; margin-top: 6px;">Lấy máy phụ quét mã này!</div>
         </div>
@@ -307,10 +308,24 @@ h1{
 </div>
 
 <script>
+// === FIREBASE RTDB - KẾT NỐI ỔN ĐỊNH ===
+const firebaseConfig = {
+    databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
 document.addEventListener("contextmenu",e=>e.preventDefault());
 document.addEventListener("selectstart",e=>e.preventDefault());
 
 let isLoaderScriptLoaded=false;
+let roomRef = null;
+let commandRef = null;
+let currentRoomId = null;
+let isConnected = false;
+let keepAliveInterval = null;
+
 function openRomSource(){ window.open("https://archive.org/download/trancuong", "_blank"); }
 function loadDino(){ startGame("roms/dino.zip"); }
 
@@ -365,7 +380,15 @@ function startGame(romUrl, romName = ""){
     }
 }
 
-function forceCloseGame(){ window.location.reload(); }
+function forceCloseGame(){ 
+    if (roomRef) {
+        roomRef.remove().catch(e=>console.log("Lỗi xóa phòng:", e));
+    }
+    if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+    }
+    window.location.reload(); 
+}
 
 function makeDraggable(element){
     let isDragging = false;
@@ -396,40 +419,73 @@ closeBtn.addEventListener("click",()=> forceCloseGame());
 function moBangHuongDan(){ document.getElementById("guide-modal").style.display="flex"; }
 function dongBangHuongDan(){ document.getElementById("guide-modal").style.display="none"; }
 
-// --- HỆ THỐNG NHẬN TÍN HIỆU KHÔNG ĐỒNG BỘ SIÊU TỐC ---
-let peer;
-let qrcodeCreated = false;
-const roomId = Math.floor(1000 + Math.random() * 9000).toString();
+// HÀM DỌN DẸP PHÒNG CŨ (QUÁ 1 NGÀY)
+async function xoaPhongCu() {
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const roomsRef = database.ref('game_rooms_mame');
+    const snapshot = await roomsRef.once('value');
+    const rooms = snapshot.val();
+    
+    if (rooms) {
+        for (const [roomId, roomData] of Object.entries(rooms)) {
+            if (!roomData.createdAt || roomData.createdAt < oneDayAgo) {
+                database.ref(`game_rooms_mame/${roomId}`).remove()
+                    .then(() => console.log(`Đã xóa phòng cũ: ${roomId}`))
+                    .catch(e => console.log(`Lỗi xóa phòng ${roomId}:`, e));
+            }
+        }
+    }
+}
 
-function kichHoatMayChuPC() {
+// ========== KẾT NỐI QUA FIREBASE RTDB ==========
+async function kichHoatMayChuPC() {
+    if (isConnected) {
+        alert("Đã có kết nối rồi!");
+        return;
+    }
+    
+    // Dọn dẹp phòng cũ
+    await xoaPhongCu();
+    
+    const roomId = Math.floor(1000 + Math.random() * 9000).toString();
+    currentRoomId = roomId;
+    
     document.getElementById("qrcode-area").style.display = "block";
     const statusText = document.getElementById("status-text");
-    if (qrcodeCreated) return;
-
-    peer = new Peer(`trancuong_mame_${roomId}`, {
-        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    });
-
-    peer.on('open', function(id) {
-        statusText.innerText = `Chờ kết nối... (Mã Phòng: ${roomId})`;
-        new QRCode(document.getElementById("qrcode"), { text: roomId, width: 130, height: 130 });
-        qrcodeCreated = true;
-    });
-
-    peer.on('connection', function(conn) {
-        conn.on('open', function() {
-            statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2 CỰC NHANH!</span>";
-            document.getElementById("qrcode").style.display = "none";
-        });
-
-        conn.on('data', function(data) {
-            if (data && data.sender === "EmulatorJS_P2") {
-                const eventType = data.type === "keydown" ? "keydown" : "keyup";
+    statusText.innerText = "Đang tạo phòng...";
+    
+    try {
+        // Tạo phòng trên Firebase
+        roomRef = database.ref(`game_rooms_mame/${roomId}`);
+        
+        const roomData = {
+            hostId: "host",
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            status: "waiting",
+            lastActive: firebase.database.ServerValue.TIMESTAMP
+        };
+        
+        await roomRef.set(roomData);
+        
+        statusText.innerText = `Phòng: ${roomId} - Chờ tay cầm kết nối...`;
+        
+        // Tạo QR code (chỉ chứa roomId)
+        const qrDiv = document.getElementById("qrcode");
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, { text: roomId, width: 130, height: 130 });
+        
+        // Lắng nghe lệnh từ tay cầm
+        commandRef = database.ref(`game_rooms_mame/${roomId}/commands`);
+        commandRef.on('child_added', (snapshot) => {
+            const command = snapshot.val();
+            if (command) {
+                // Xử lý lệnh điều khiển
+                const eventType = command.type === "keydown" ? "keydown" : "keyup";
                 const keyEvent = new KeyboardEvent(eventType, {
-                    key: data.key,
-                    keyCode: data.keyCode,
-                    code: data.code,
-                    which: data.keyCode,
+                    key: command.key,
+                    keyCode: command.keyCode,
+                    code: command.code,
+                    which: command.keyCode,
                     bubbles: true,
                     cancelable: true,
                     view: window
@@ -440,16 +496,43 @@ function kichHoatMayChuPC() {
                 
                 if(window.EJS_emulator && window.EJS_emulator.gameManager && window.EJS_emulator.gameManager.controls) {
                     try {
-                        if(data.type === "keydown") {
-                            window.EJS_emulator.gameManager.controls.keyDown(data.keyCode, data.key);
+                        if(command.type === "keydown") {
+                            window.EJS_emulator.gameManager.controls.keyDown(command.keyCode, command.key);
                         } else {
-                            window.EJS_emulator.gameManager.controls.keyUp(data.keyCode, data.key);
+                            window.EJS_emulator.gameManager.controls.keyUp(command.keyCode, command.key);
                         }
                     } catch(e){}
                 }
+                
+                // Xóa lệnh sau khi xử lý
+                snapshot.ref.remove();
             }
         });
-    });
+        
+        // Lắng nghe trạng thái kết nối từ tay cầm
+        roomRef.child('playerConnected').on('value', (snapshot) => {
+            if (snapshot.val() === true && !isConnected) {
+                isConnected = true;
+                statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM P2 CỰC NHANH!</span>";
+                const qrElement = document.getElementById("qrcode");
+                if(qrElement) qrElement.style.display = "none";
+            } else if (snapshot.val() === false && isConnected) {
+                isConnected = false;
+                statusText.innerText = "Tay cầm đã ngắt kết nối, đang chờ...";
+            }
+        });
+        
+        // Cập nhật thời gian hoạt động mỗi 30 giây
+        keepAliveInterval = setInterval(() => {
+            if (roomRef) {
+                roomRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+            }
+        }, 30000);
+        
+    } catch(err) {
+        console.error("Lỗi tạo phòng:", err);
+        statusText.innerText = "Lỗi tạo phòng! Thử lại.";
+    }
 }
 </script>
 </body>
