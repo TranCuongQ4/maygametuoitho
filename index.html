@@ -90,6 +90,59 @@
             color: #00ffcc; 
         }
         
+        /* Khung kết nối Firebase */
+        .firebase-panel {
+            background: #1e2530;
+            border: 2px solid #30363d;
+            border-radius: 14px;
+            padding: 15px;
+            width: 90%;
+            max-width: 340px;
+            margin: 10px 0 15px 0;
+            text-align: center;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .firebase-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        .firebase-btn-group {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+        .firebase-btn {
+            flex: 1;
+            background: #2a3241;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 10px 5px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .firebase-btn:active { background: #ffcc00; color: #000; }
+        .btn-host-fb { border-color: #00ffcc; color: #00ffcc; }
+        .btn-client-fb { border-color: #ff3366; color: #ff3366; }
+        #qrcode-area-fb {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #444;
+        }
+        #qrcode-fb {
+            background: white;
+            padding: 8px;
+            display: inline-block;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        
         #file-input { 
             display: none; 
         }
@@ -247,12 +300,29 @@
             background: #ffcc00;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div id="menu-container">
         <h1>🎮 GAME TUỔI THƠ 🎮</h1>
         <p>Hệ máy NES & SNES - Kỷ niệm tuổi thơ</p>
         <div class="rotate-hint">🔄 Hãy xoay ngang điện thoại để chơi game tốt nhất!</div>
+        
+        <!-- === KHUNG KẾT NỐI FIREBASE (THÊM MỚI) === -->
+        <div class="firebase-panel">
+            <div class="firebase-title">🔗 KẾT NỐI TAY CẦM PLAYER 2 (NES)</div>
+            <div class="firebase-btn-group">
+                <button class="firebase-btn btn-host-fb" onclick="kichHoatMayChuPC()">LÀM MÁY CHỦ (HIỆN QR)</button>
+                <button class="firebase-btn btn-client-fb" onclick="window.location.href='taynes.html'">LÀM MÁY PHỤ (TAY CẦM NES)</button>
+            </div>
+            <div id="qrcode-area-fb">
+                <div id="status-text-fb" style="font-size: 12px; color: #aaa;">Đang khởi tạo máy chủ...</div>
+                <div id="qrcode-fb"></div>
+                <div style="font-size: 11px; color: #00ffcc; margin-top: 6px;">Lấy máy phụ quét mã này!</div>
+            </div>
+        </div>
         
         <div class="section-title">🎮 Game NES (4 Nút) 🎮</div>
         <button class="btn" onclick="loadGame('fceumm', 'roms/150-in-1.nes')">🎮 150-in-1 (Bản tổng hợp 1)</button>
@@ -323,6 +393,128 @@
     </div>
 
     <script>
+        // === FIREBASE RTDB - KẾT NỐI ỔN ĐỊNH ===
+        const firebaseConfig = {
+            databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let isLoaderScriptLoaded = false;
+        let roomRef = null;
+        let commandRef = null;
+        let currentRoomId = null;
+        let isConnected = false;
+        let keepAliveInterval = null;
+
+        // HÀM DỌN DẸP PHÒNG CŨ (QUÁ 1 NGÀY)
+        async function xoaPhongCu() {
+            const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+            const roomsRef = database.ref('game_rooms_nes_snes');
+            const snapshot = await roomsRef.once('value');
+            const rooms = snapshot.val();
+            
+            if (rooms) {
+                for (const [roomId, roomData] of Object.entries(rooms)) {
+                    if (!roomData.createdAt || roomData.createdAt < oneDayAgo) {
+                        database.ref(`game_rooms_nes_snes/${roomId}`).remove()
+                            .then(() => console.log(`Đã xóa phòng cũ: ${roomId}`))
+                            .catch(e => console.log(`Lỗi xóa phòng ${roomId}:`, e));
+                    }
+                }
+            }
+        }
+
+        // ========== KẾT NỐI QUA FIREBASE RTDB ==========
+        async function kichHoatMayChuPC() {
+            if (isConnected) {
+                alert("Đã có kết nối rồi!");
+                return;
+            }
+            
+            await xoaPhongCu();
+            
+            const roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            currentRoomId = roomId;
+            
+            document.getElementById("qrcode-area-fb").style.display = "block";
+            const statusText = document.getElementById("status-text-fb");
+            statusText.innerText = "Đang tạo phòng...";
+            
+            try {
+                roomRef = database.ref(`game_rooms_nes_snes/${roomId}`);
+                
+                const roomData = {
+                    hostId: "host",
+                    createdAt: firebase.database.ServerValue.TIMESTAMP,
+                    status: "waiting",
+                    lastActive: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                await roomRef.set(roomData);
+                
+                statusText.innerText = `Phòng: ${roomId} - Chờ tay cầm kết nối...`;
+                
+                const qrDiv = document.getElementById("qrcode-fb");
+                qrDiv.innerHTML = "";
+                new QRCode(qrDiv, { text: roomId, width: 130, height: 130 });
+                
+                commandRef = database.ref(`game_rooms_nes_snes/${roomId}/commands`);
+                commandRef.on('child_added', (snapshot) => {
+                    const command = snapshot.val();
+                    if (command) {
+                        const eventType = command.type === "keydown" ? "keydown" : "keyup";
+                        const keyEvent = new KeyboardEvent(eventType, {
+                            key: command.key,
+                            keyCode: command.keyCode,
+                            code: command.code,
+                            which: command.keyCode,
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        });
+                        document.dispatchEvent(keyEvent);
+                        const emuEl = document.getElementById("emulator");
+                        if(emuEl) emuEl.dispatchEvent(keyEvent);
+                        
+                        if(window.EJS_emulator && window.EJS_emulator.gameManager && window.EJS_emulator.gameManager.controls) {
+                            try {
+                                if(command.type === "keydown") {
+                                    window.EJS_emulator.gameManager.controls.keyDown(command.keyCode, command.key);
+                                } else {
+                                    window.EJS_emulator.gameManager.controls.keyUp(command.keyCode, command.key);
+                                }
+                            } catch(e){}
+                        }
+                        
+                        snapshot.ref.remove();
+                    }
+                });
+                
+                roomRef.child('playerConnected').on('value', (snapshot) => {
+                    if (snapshot.val() === true && !isConnected) {
+                        isConnected = true;
+                        statusText.innerHTML = "✅ <span style='color:#00ffcc;font-weight:bold;'>ĐÃ KẾT NỐI TAY CẦM NES!</span>";
+                        const qrElement = document.getElementById("qrcode-fb");
+                        if(qrElement) qrElement.style.display = "none";
+                    } else if (snapshot.val() === false && isConnected) {
+                        isConnected = false;
+                        statusText.innerText = "Tay cầm đã ngắt kết nối, đang chờ...";
+                    }
+                });
+                
+                keepAliveInterval = setInterval(() => {
+                    if (roomRef) {
+                        roomRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
+                    }
+                }, 30000);
+                
+            } catch(err) {
+                console.error("Lỗi tạo phòng:", err);
+                statusText.innerText = "Lỗi tạo phòng! Thử lại.";
+            }
+        }
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for (let registration of registrations) {
@@ -332,7 +524,6 @@
         }
 
         const CURRENT_PATH = window.location.protocol + '//' + window.location.host + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-        let isLoaderScriptLoaded = false;
         
         function snesSF2() {
             startEmulator('snes9x', CURRENT_PATH + 'roms/Street Fighter II Turbo (V1.0) (E) [!].smc', 'Street Fighter II Turbo (V1.0) (E) [!].smc');
@@ -381,7 +572,6 @@
                 const response = await fetch(firstPartUrl);
                 if (!response.ok) throw new Error("Lỗi nạp file đơn lẻ từ link");
                 let singleBuffer = await response.arrayBuffer();
-                // Khử luôn rác header nếu là file đơn .sfc/.smc lẻ có dính kèm đầu đĩa sao chép cổ
                 return cleanAndMergeBuffers([singleBuffer]);
             }
 
@@ -419,7 +609,6 @@
                 }
             } else {
                 try {
-                    // Xử lý cả trường hợp click game sẵn có nhưng file gốc nạp vào bị dính header đơn lẻ
                     let response = await fetch(CURRENT_PATH + romUrl);
                     let rawBuf = await response.arrayBuffer();
                     let cleanBuffer = cleanAndMergeBuffers([rawBuf]);
@@ -557,6 +746,12 @@
         }
         
         function forceCloseGame() {
+            if (roomRef) {
+                roomRef.remove().catch(e=>console.log("Lỗi xóa phòng:", e));
+            }
+            if (keepAliveInterval) {
+                clearInterval(keepAliveInterval);
+            }
             window.location.reload();
         }
         
