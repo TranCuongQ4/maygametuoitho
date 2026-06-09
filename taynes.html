@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Tay Cầm NES Pro - Trần Cường</title>
+<title>Tay Cầm NES/SNES Pro - Trần Cường</title>
 <style>
 * { 
     box-sizing: border-box; 
@@ -17,6 +17,31 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 .header-status { width: 100%; display: flex; justify-content: space-between; align-items: center; color: #fff; font-size: 13px; height: 35px; border-bottom: 1px solid #c0392b; }
 .status-dot { display: inline-block; width: 10px; height: 10px; background: #ff3366; border-radius: 50%; margin-right: 5px; }
 .connected .status-dot { background: #00ffcc; box-shadow: 0 0 8px #00ffcc; }
+
+/* Nút Vai L/R */
+.shoulder-area { display: flex; justify-content: space-between; width: 100%; padding: 0 10px; }
+.shoulder-btn { 
+    width: 110px; 
+    height: 40px; 
+    background: linear-gradient(180deg, #5a3a3a, #3a2020); 
+    border: 1px solid #c0392b; 
+    color: #fff; 
+    font-weight: bold; 
+    font-size: 16px;
+    border-radius: 20px 20px 8px 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: 0 5px 0px #2a1010, 0 6px 10px rgba(0,0,0,0.6);
+    transition: all 0.05s ease;
+    touch-action: manipulation;
+}
+.shoulder-btn:active, .shoulder-btn.active { 
+    transform: translateY(4px);
+    box-shadow: 0 1px 0px #2a1010, 0 2px 4px rgba(0,0,0,0.4);
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+    color: #ffcc00;
+}
 
 .gamepad-area { display: flex; justify-content: space-between; align-items: center; flex-grow: 1; width: 100%; margin-top: 10px; }
 
@@ -81,8 +106,8 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     box-shadow: 0 1px 0px #991b1b, 0 1px 3px rgba(0,0,0,0.4);
 }
 
-/* CỤM NÚT NES 2 NÚT A B */
-.nes-diamond { position: relative; width: 170px; height: 170px; }
+/* CỤM NÚT SNES DIAMOND (Y, X, B, A) */
+.snes-diamond { position: relative; width: 170px; height: 170px; }
 .action-btn { 
     position: absolute; 
     width: 56px; 
@@ -96,16 +121,31 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
     transition: all 0.05s ease;
     touch-action: manipulation;
 }
-/* Nút B (Vàng) - BÊN TRÁI */
-.btn-b { 
+
+/* Nút Y - TRÊN (Tím) */
+.btn-y { 
+    top: 0; left: 57px; 
+    background: linear-gradient(180deg, #bb8fce, #7d3c98); 
+    border: 2px solid #d7bde2; color: #fff; 
+    box-shadow: 0 6px 0px #4a235a, 0 6px 12px rgba(0,0,0,0.5);
+}   
+/* Nút X - TRÁI (Xanh Dương) */
+.btn-x { 
     top: 57px; left: 0; 
+    background: linear-gradient(180deg, #5dade2, #2e86c1); 
+    border: 2px solid #85c1e9; color: #fff; 
+    box-shadow: 0 6px 0px #1b4f72, 0 6px 12px rgba(0,0,0,0.5);
+}   
+/* Nút B - PHẢI (Vàng Cam) */
+.btn-b { 
+    top: 57px; right: 0; 
     background: linear-gradient(180deg, #f8c471, #d35400); 
     border: 2px solid #fad7a0; color: #fff; 
     box-shadow: 0 6px 0px #7e5109, 0 6px 12px rgba(0,0,0,0.5);
 }  
-/* Nút A (Đỏ) - BÊN PHẢI */
+/* Nút A - DƯỚI (Đỏ) */
 .btn-a { 
-    top: 57px; right: 0; 
+    bottom: 0; left: 57px; 
     background: linear-gradient(180deg, #f1948a, #cb4335); 
     border: 2px solid #f5b7b1; color: #fff; 
     box-shadow: 0 6px 0px #78281f, 0 6px 12px rgba(0,0,0,0.5);
@@ -149,11 +189,16 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 <body>
 
 <div class="header-status" id="status-bar">
-    <div>🎮 THIẾT BỊ: <span style="color: #e74c3c; font-weight:bold;">NES GamePad Pro</span></div>
+    <div>🎮 THIẾT BỊ: <span style="color: #e74c3c; font-weight:bold;">NES/SNES GamePad Pro</span></div>
     <div id="status-text"><span class="status-dot"></span>Chưa liên kết. Bấm Quét QR!</div>
 </div>
 
 <div id="floating-close-btn">✕</div>
+
+<div class="shoulder-area">
+    <div class="shoulder-btn" data-key="u" data-keycode="85" data-code="KeyU">L</div>
+    <div class="shoulder-btn" data-key="o" data-keycode="79" data-code="KeyO">R</div>
+</div>
 
 <div class="gamepad-area">
     <div class="joystick-container" id="joy-container">
@@ -162,11 +207,13 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 
     <div class="center-controls">
         <button class="btn-scan" onclick="moCameraQuet()">📷 QUÉT QR</button>
-        <div class="sys-btn" data-key="0" data-keycode="48" data-code="Digit0">SELECT</div>
+        <div class="sys-btn" data-key="0" data-keycode="48" data-code="Digit0">SELECT (COIN)</div>
         <div class="sys-btn" data-key="9" data-keycode="57" data-code="Digit9">START</div>
     </div>
 
-    <div class="nes-diamond">
+    <div class="snes-diamond">
+        <div class="action-btn btn-y" data-key="c" data-keycode="67" data-code="KeyC">Y</div>
+        <div class="action-btn btn-x" data-key="f" data-keycode="70" data-code="KeyF">X</div>
         <div class="action-btn btn-b" data-key="d" data-keycode="68" data-code="KeyD">B</div>
         <div class="action-btn btn-a" data-key="v" data-keycode="86" data-code="KeyV">A</div>
     </div>
@@ -179,7 +226,7 @@ body { display: flex; flex-direction: column; justify-content: space-between; pa
 </div>
 
 <script>
-// === FIREBASE RTDB - KẾT NỐI ỔN ĐỊNH CHO NES ===
+// === FIREBASE RTDB - KẾT NỐI ỔN ĐỊNH ===
 const firebaseConfig = {
     databaseURL: "https://cuongdata-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
@@ -217,34 +264,38 @@ function dongCameraQuet() {
 
 function ketNoiPhong(roomId) {
     const statusText = document.getElementById("status-text");
-    statusText.innerText = `Đang kết nối phòng NES ${roomId}...`;
+    statusText.innerText = `Đang kết nối phòng ${roomId}...`;
     
     currentRoomId = roomId;
     roomRef = database.ref(`game_rooms_nes_snes/${roomId}`);
     
+    // Kiểm tra phòng tồn tại
     roomRef.once('value').then((snapshot) => {
         const roomData = snapshot.val();
         
         if (!roomData) {
-            statusText.innerText = "❌ Phòng NES không tồn tại!";
+            statusText.innerText = "❌ Phòng không tồn tại!";
             return;
         }
         
+        // Đánh dấu player đã kết nối
         roomRef.update({ 
             playerConnected: true,
             lastActive: firebase.database.ServerValue.TIMESTAMP
         });
         
-        statusText.innerHTML = "<span class='status-dot'></span>⚡ TAY CẦM NES SẴN SÀNG! ⚡";
+        statusText.innerHTML = "<span class='status-dot'></span>⚡ TAY CẦM SẴN SÀNG! ⚡";
         document.getElementById("status-bar").classList.add("connected");
         isConnected = true;
         
+        // Cập nhật thời gian hoạt động mỗi 30 giây
         keepAliveInterval = setInterval(() => {
             if (roomRef) {
                 roomRef.update({ lastActive: firebase.database.ServerValue.TIMESTAMP });
             }
         }, 30000);
         
+        // Lắng nghe khi phòng bị xóa (host thoát)
         roomRef.on('value', (snapshot) => {
             if (!snapshot.exists() && isConnected) {
                 statusText.innerHTML = "<span class='status-dot'></span>❌ Mất kết nối với máy chủ!";
@@ -281,7 +332,7 @@ function handleTouch(e) {
     for (let i = 0; i < e.touches.length; i++) {
         const touch = e.touches[i];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (element && (element.classList.contains('action-btn') || element.classList.contains('sys-btn'))) {
+        if (element && (element.classList.contains('action-btn') || element.classList.contains('sys-btn') || element.classList.contains('shoulder-btn'))) {
             if (element.getAttribute('data-key')) currentTouches.add(element);
         }
     }
@@ -468,6 +519,7 @@ function moveJoystick(touch) {
     });
 })();
 
+// Ngắt kết nối khi đóng trang
 window.addEventListener('beforeunload', () => {
     if (roomRef) {
         roomRef.update({ playerConnected: false });
@@ -481,6 +533,7 @@ document.documentElement.addEventListener('touchstart', (e) => {
     if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
+// Chặn các phím tắt và menu chuột phải
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);
 document.addEventListener('selectstart', function(e) { e.preventDefault(); });
 document.addEventListener('keydown', function(e) {
