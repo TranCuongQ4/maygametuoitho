@@ -357,19 +357,22 @@ window.addEventListener('touchmove', handleTouch, { passive: false });
 window.addEventListener('touchend', handleTouch, { passive: false });
 window.addEventListener('touchcancel', handleTouch, { passive: false });
 
-// JOYSTICK - Điều khiển ↑ ↓ ← →
+
+
+// JOYSTICK - Điều khiển cho Player 2 (dùng phím I, K, J, L)
 const joyContainer = document.getElementById('joy-container');
 const joyKnob = document.getElementById('joy-knob');
 let joystickActive = false;
 let joyTouchId = null;
 const maxDistance = 40; 
-let currentKeys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+// ĐỔI THÀNH PHÍM I, K, J, L (KHÔNG TRÙNG VỚI PLAYER 1)
+let currentKeys = { i: false, k: false, j: false, l: false };
 
 const keyMapJoy = {
-    ArrowUp: { key: "ArrowUp", keyCode: 38, code: "ArrowUp" },
-    ArrowDown: { key: "ArrowDown", keyCode: 40, code: "ArrowDown" },
-    ArrowLeft: { key: "ArrowLeft", keyCode: 37, code: "ArrowLeft" },
-    ArrowRight: { key: "ArrowRight", keyCode: 39, code: "ArrowRight" }
+    i: { key: "i", keyCode: 73, code: "KeyI" },     // LÊN
+    k: { key: "k", keyCode: 75, code: "KeyK" },     // XUỐNG
+    j: { key: "j", keyCode: 74, code: "KeyJ" },     // TRÁI
+    l: { key: "l", keyCode: 76, code: "KeyL" }      // PHẢI
 };
 
 function updateJoystickKeys(targetKeys) {
@@ -409,7 +412,7 @@ window.addEventListener('touchend', (e) => {
             joystickActive = false;
             joyTouchId = null;
             joyKnob.style.transform = `translate(0px, 0px)`;
-            updateJoystickKeys({ ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false });
+            updateJoystickKeys({ i: false, k: false, j: false, l: false });
             break;
         }
     }
@@ -428,23 +431,30 @@ function moveJoystick(touch) {
     }
     joyKnob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
     
-    let nextKeys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    let nextKeys = { i: false, k: false, j: false, l: false };
     const threshold = 15; 
     if (distance > threshold) {
         const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-        if (angle >= -120 && angle <= -60) nextKeys.ArrowUp = true; 
-        else if (angle >= 60 && angle <= 120) nextKeys.ArrowDown = true; 
-        else if (angle >= -30 && angle <= 30) nextKeys.ArrowRight = true; 
-        else if (angle >= 150 || angle <= -150) nextKeys.ArrowLeft = true; 
+        // LÊN - I
+        if (angle >= -120 && angle <= -60) nextKeys.i = true; 
+        // XUỐNG - K
+        else if (angle >= 60 && angle <= 120) nextKeys.k = true; 
+        // PHẢI - L
+        else if (angle >= -30 && angle <= 30) nextKeys.l = true; 
+        // TRÁI - J
+        else if (angle >= 150 || angle <= -150) nextKeys.j = true; 
+        // CHẾCH
         else {
-            if (angle > -60 && angle < -30) { nextKeys.ArrowUp = true; nextKeys.ArrowRight = true; }
-            if (angle > -150 && angle < -120) { nextKeys.ArrowUp = true; nextKeys.ArrowLeft = true; }
-            if (angle > 30 && angle < 60) { nextKeys.ArrowDown = true; nextKeys.ArrowRight = true; }
-            if (angle > 120 && angle < 150) { nextKeys.ArrowDown = true; nextKeys.ArrowLeft = true; }
+            if (angle > -60 && angle < -30) { nextKeys.i = true; nextKeys.l = true; }
+            if (angle > -150 && angle < -120) { nextKeys.i = true; nextKeys.j = true; }
+            if (angle > 30 && angle < 60) { nextKeys.k = true; nextKeys.l = true; }
+            if (angle > 120 && angle < 150) { nextKeys.k = true; nextKeys.j = true; }
         }
     }
     updateJoystickKeys(nextKeys);
 }
+
+
 
 // NÚT ĐÓNG
 (function() {
